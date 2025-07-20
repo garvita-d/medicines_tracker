@@ -567,24 +567,33 @@
                 <div class="time-section">
                     <div class="time-header">
                         <span class="time-icon">🌅</span>
-                        Before Breakfast (8:00 AM)
+                        Before Breakfast (Morning)
                     </div>
-                    <div id="fatherMorning">
-                        <div class="medicine-item">
-                            <div class="medicine-info">
-                                <div class="medicine-name">Maxi PhD</div>
-                                <div class="medicine-details">30 days tablets</div>
-                                <div class="control-buttons">
-                                    <button class="btn btn-take">✓ Take Dose</button>
-                                    <button class="btn btn-add">+ Add Stock</button>
-                                </div>
-                            </div>
-                            <div class="medicine-stock">
-                                <div class="stock-count">30</div>
-                                <div class="stock-label">doses left</div>
-                            </div>
-                        </div>
+                    <div id="fatherMorningBefore"></div>
+                </div>
+
+                <div class="time-section">
+                    <div class="time-header">
+                        <span class="time-icon">🍳</span>
+                        After Breakfast
                     </div>
+                    <div id="fatherMorningAfter"></div>
+                </div>
+
+                <div class="time-section">
+                    <div class="time-header">
+                        <span class="time-icon">🕐</span>
+                        4 PM
+                    </div>
+                    <div id="father4PM"></div>
+                </div>
+
+                <div class="time-section">
+                    <div class="time-header">
+                        <span class="time-icon">🍽️</span>
+                        After Dinner
+                    </div>
+                    <div id="fatherNight"></div>
                 </div>
             </div>
         </div>
@@ -594,6 +603,22 @@
                 <div class="person-header">
                     <div class="person-icon">👩</div>
                     <div class="person-name">Mother's Medicine Schedule</div>
+                </div>
+                
+                <div class="time-section">
+                    <div class="time-header">
+                        <span class="time-icon">🍳</span>
+                        After Breakfast
+                    </div>
+                    <div id="motherMorning"></div>
+                </div>
+
+                <div class="time-section">
+                    <div class="time-header">
+                        <span class="time-icon">🍽️</span>
+                        After Dinner
+                    </div>
+                    <div id="motherNight"></div>
                 </div>
             </div>
         </div>
@@ -619,12 +644,44 @@
         let notificationPermission = Notification.permission;
         let reminderIntervals = [];
 
+        // Medicine data structure
+        const medicineData = {
+            father: {
+                morningBefore: [
+                    { name: "Maxi PhD", dosage: "30 days tablets", stock: 30, originalStock: 30 }
+                ],
+                morningAfter: [
+                    { name: "Metolol MF", dosage: "60mg - 30 days", stock: 30, originalStock: 30 },
+                    { name: "Pilclop", dosage: "75mg - 30 days", stock: 30, originalStock: 30 },
+                    { name: "Cordarone", dosage: "30 days", stock: 30, originalStock: 30 },
+                    { name: "Orofer XT", dosage: "30 tablets", stock: 30, originalStock: 30 },
+                    { name: "Hyqvit", dosage: "30 tablets", stock: 30, originalStock: 30 }
+                ],
+                afternoon: [
+                    { name: "Acitrom", dosage: "1mg/2mg alternate days - 30 days", stock: 30, originalStock: 30 }
+                ],
+                night: [
+                    { name: "Rotin F", dosage: "30 tablets", stock: 30, originalStock: 30 },
+                    { name: "Telmiford", dosage: "40mg - 30 tablets", stock: 30, originalStock: 30 }
+                ]
+            },
+            mother: {
+                morning: [
+                    { name: "Telzox H", dosage: "30 tablets", stock: 30, originalStock: 30 }
+                ],
+                night: [
+                    { name: "Cinod", dosage: "10mg - 60 tablets (2x daily)", stock: 60, originalStock: 60 },
+                    { name: "Zavamet", dosage: "50/500 - 60 tablets (2x daily)", stock: 60, originalStock: 60 }
+                ]
+            }
+        };
+
         // Medicine reminder times (24-hour format)
         const reminderTimes = [
-            { time: '08:00', message: "Time for Father's morning medicine (before breakfast)" },
-            { time: '11:00', message: "Time for after-breakfast medicines for both parents" },
+            { time: '08:00', message: "Time for Father's morning medicine (before breakfast) - Maxi PhD" },
+            { time: '09:00', message: "Time for after-breakfast medicines for Father and Mother" },
             { time: '16:00', message: "Time for Father's 4 PM medicine (Acitrom)" },
-            { time: '22:00', message: "Time for evening medicines for both parents" }
+            { time: '21:00', message: "Time for evening medicines for both parents" }
         ];
 
         // Initialize the application
@@ -645,10 +702,114 @@
             // Initialize voice if available
             initializeVoiceRecognition();
             
+            // Populate medicine schedules
+            populateMedicineSchedules();
+            
+            // Generate stock alerts
+            generateStockAlerts();
+            
             // Auto-greet user
             setTimeout(() => {
                 speak("Welcome to MediBot! Enable notifications for automatic medicine reminders.");
             }, 3000);
+        }
+
+        // Populate medicine schedules in the UI
+        function populateMedicineSchedules() {
+            // Father's medicines
+            populateTimeSection('fatherMorningBefore', medicineData.father.morningBefore, 'father');
+            populateTimeSection('fatherMorningAfter', medicineData.father.morningAfter, 'father');
+            populateTimeSection('father4PM', medicineData.father.afternoon, 'father');
+            populateTimeSection('fatherNight', medicineData.father.night, 'father');
+            
+            // Mother's medicines
+            populateTimeSection('motherMorning', medicineData.mother.morning, 'mother');
+            populateTimeSection('motherNight', medicineData.mother.night, 'mother');
+        }
+
+        // Populate a specific time section with medicines
+        function populateTimeSection(sectionId, medicines, person) {
+            const section = document.getElementById(sectionId);
+            if (!section || !medicines) return;
+            
+            section.innerHTML = '';
+            
+            medicines.forEach((medicine, index) => {
+                const medicineElement = createMedicineElement(medicine, person, sectionId, index);
+                section.appendChild(medicineElement);
+            });
+        }
+
+        // Create a medicine element
+        function createMedicineElement(medicine, person, sectionId, index) {
+            const div = document.createElement('div');
+            div.className = `medicine-item ${medicine.stock <= 5 ? 'low-stock' : ''}`;
+            
+            div.innerHTML = `
+                <div class="medicine-info">
+                    <div class="medicine-name">${medicine.name}</div>
+                    <div class="medicine-details">${medicine.dosage}</div>
+                    <div class="control-buttons">
+                        <button class="btn btn-take" onclick="takeMedicine('${medicine.name}', '${person}', '${sectionId}', ${index})">
+                            ✓ Take Dose
+                        </button>
+                        <button class="btn btn-add" onclick="addMedicineStock('${medicine.name}', '${person}', '${sectionId}', ${index})">
+                            + Add Stock
+                        </button>
+                    </div>
+                </div>
+                <div class="medicine-stock">
+                    <div class="stock-count ${medicine.stock <= 5 ? 'low' : ''}" id="stock-${person}-${sectionId}-${index}">
+                        ${medicine.stock}
+                    </div>
+                    <div class="stock-label">doses left</div>
+                </div>
+            `;
+            
+            return div;
+        }
+
+        // Generate stock alerts
+        function generateStockAlerts() {
+            const alertsContainer = document.getElementById('stockAlerts');
+            alertsContainer.innerHTML = '';
+            
+            let hasAlerts = false;
+            
+            // Check all medicines for low stock
+            Object.keys(medicineData).forEach(person => {
+                Object.keys(medicineData[person]).forEach(timeSlot => {
+                    medicineData[person][timeSlot].forEach(medicine => {
+                        if (medicine.stock <= 5) {
+                            hasAlerts = true;
+                            const alertDiv = document.createElement('div');
+                            alertDiv.className = 'alert urgent-alert';
+                            alertDiv.innerHTML = `
+                                <span class="alert-icon">⚠️</span>
+                                <div>
+                                    <strong>LOW STOCK ALERT:</strong> ${medicine.name} 
+                                    (${person.charAt(0).toUpperCase() + person.slice(1)}) 
+                                    has only ${medicine.stock} doses remaining!
+                                    <br><small>Please order more soon to avoid running out.</small>
+                                </div>
+                            `;
+                            alertsContainer.appendChild(alertDiv);
+                        }
+                    });
+                });
+            });
+            
+            if (!hasAlerts) {
+                alertsContainer.innerHTML = `
+                    <div class="alert" style="background: linear-gradient(135deg, #d1f2eb 0%, #a3e4d7 100%); color: #0c5460; border-color: #17a2b8;">
+                        <span class="alert-icon">✅</span>
+                        <div>
+                            <strong>All Good!</strong> All medicines have adequate stock levels.
+                            <br><small>Keep monitoring stock levels for timely refills.</small>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         // Setup PWA (Progressive Web App)
