@@ -725,7 +725,6 @@
     <script>
         // PWA and Notification variables
         let deferredPrompt;
-        let notificationPermission = Notification.permission;
         let reminderIntervals = [];
 
         // Medicine data structure with persistent storage keys
@@ -770,7 +769,7 @@
             { time: '22:00', message: "Time for evening medicines", medicines: ["Rotin F", "Telmiford", "Cinod", "Zavamet"] }
         ];
 
-        // Storage functions using variables instead of localStorage
+        // Enhanced storage functions with persistent tracking
         let appStorage = {};
 
         function saveToStorage(key, value) {
@@ -786,17 +785,91 @@
             return new Date().toDateString();
         }
 
-        // Load saved data
+        function getYesterdayKey() {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            return yesterday.toDateString();
+        }
+
+        // Enhanced data loading with persistent stock tracking
         function loadSavedData() {
             console.log("Loading saved data...");
             
-            // Load stock levels
+            const today = getTodayKey();
+            const lastActiveDay = getFromStorage('lastActiveDay');
+            
+            // Load current stock levels
             Object.keys(medicineData).forEach(person => {
                 Object.keys(medicineData[person]).forEach(timeSlot => {
                     medicineData[person][timeSlot].forEach((medicine, index) => {
                         const savedStock = getFromStorage(medicine.storageKey + '_stock');
                         if (savedStock !== null) {
                             medicine.stock = savedStock;
+                        }
+                    });
+                });
+            });
+
+            // If it's a new day and we haven't processed yesterday's doses, handle the transition
+            if (lastActiveDay && lastActiveDay !== today) {
+                handleDayTransition(lastActiveDay, today);
+            }
+            
+            // Update last active day
+            saveToStorage('lastActiveDay', today);
+        }
+
+        // Handle transition from one day to the next
+        function handleDayTransition(lastDay, currentDay) {
+            console.log(`Day transition from ${lastDay} to ${currentDay}`);
+            
+            // Archive previous day's data
+            archivePreviousDayData(lastDay);
+            
+            // Reset daily tracking for new day but keep stock levels
+            resetDailyTracking();
+        }
+
+        // Archive previous day's dose tracking data
+        function archivePreviousDayData(dayKey) {
+            Object.keys(medicineData).forEach(person => {
+                Object.keys(medicineData[person]).forEach(timeSlot => {
+                    medicineData[person][timeSlot].forEach((medicine) => {
+                        const takenKey = medicine.storageKey + '_taken_' + dayKey;
+                        const wasTaken = getFromStorage(takenKey);
+                        
+                        if (wasTaken) {
+                            // Store in historical data
+                            const historyKey = medicine.storageKey + '_history';
+                            let history = getFromStorage(historyKey) || [];
+                            history.push({ date: dayKey, taken: true });
+                            
+                            // Keep only last 30 days of history
+                            if (history.length > 30) {
+                                history = history.slice(-30);
+                            }
+                            
+                            saveToStorage(historyKey, history);
+                        }
+                    });
+                });
+            });
+        }
+
+        // Reset daily tracking for new day
+        function resetDailyTracking() {
+            const today = getTodayKey();
+            console.log(`Resetting daily tracking for ${today}`);
+            
+            // Clear today's taken status (in case of page reload on same day)
+            Object.keys(medicineData).forEach(person => {
+                Object.keys(medicineData[person]).forEach(timeSlot => {
+                    medicineData[person][timeSlot].forEach((medicine) => {
+                        const todayTakenKey = medicine.storageKey + '_taken_' + today;
+                        // Don't reset if already taken today
+                        const alreadyTaken = getFromStorage(todayTakenKey);
+                        if (!alreadyTaken) {
+                            saveToStorage(todayTakenKey, false);
                         }
                     });
                 });
@@ -814,6 +887,11 @@
         function markTakenToday(storageKey, taken = true) {
             const todayKey = getTodayKey();
             saveToStorage(storageKey + '_taken_' + todayKey, taken);
+        }
+
+        // Get medicine history
+        function getMedicineHistory(storageKey) {
+            return getFromStorage(storageKey + '_history') || [];
         }
 
         // Initialize the application
@@ -836,9 +914,6 @@
             updateNextReminder();
             setInterval(updateNextReminder, 60000);
             
-            // Check for low stock reminders every 5 minutes
-            setInterval(checkLowStockReminders, 5 * 60 * 1000);
-            
             // Initialize voice if available
             initializeVoiceRecognition();
             
@@ -852,42 +927,8 @@
             // Auto-greet user
             setTimeout(() => {
                 speak("Welcome to MediBot! All medicine schedules loaded successfully.");
-                // Check for immediate low stock alerts
-                checkLowStockReminders();
             }, 2000);
         }
-
-        // Check for low stock reminders
-        function checkLowStockReminders() {
-            Object.keys(medicineData).forEach(person => {
-                Object.keys(medicineData[person]).forEach(timeSlot => {
-                    medicineData[person][timeSlot].forEach((medicine) => {
-                        if (medicine.stock <= 5 && !wasTakenToday('low_stock_' + medicine.storageKey)) {
-                                const reminderMessage = `LOW STOCK ALERT: ${medicine.name} only has ${medicine.stock} tablets left. Please refill soon!`;
-                                
-                                // Show browser notification if permitted
-                                if (notificationPermission === 'granted') {
-                                    new Notification('🚨 Low Stock Alert', {
-                                        body: reminderMessage,
-                                        icon: 'https://via.placeholder.com/64/ff6b6b/ffffff?text=🏥',
-                                        requireInteraction: true
-                                    });
-                                }
-                                
-                                // Show custom notification
-                                showCustomNotification('🚨 Low Stock Alert', reminderMessage);
-                                
-                                // Speak the alert
-                                speak(reminderMessage);
-                                
-                                // Mark as alerted today to avoid spam
-                                markTakenToday('low_stock_' + medicine.storageKey, true);
-                            }
-                        });
-                    });
-                });
-            };
-        
 
         // PWA setup
         function setupPWA() {
@@ -921,51 +962,6 @@
             } else {
                 alert('Add to Home Screen: Use your browser menu to add this app to your home screen');
             }
-        }
-
-        // Notification functions
-        function enableBrowserNotifications() {
-            Notification.requestPermission().then(permission => {
-                notificationPermission = permission;
-                updateNotificationStatus();
-                if (permission === 'granted') {
-                    new Notification('🎉 Notifications Enabled!', {
-                        body: 'You will now receive medicine reminders',
-                        icon: 'https://via.placeholder.com/64/28a745/ffffff?text=✓'
-                    });
-                }
-            });
-        }
-
-        function updateNotificationStatus() {
-            const statusDiv = document.getElementById('notificationStatus');
-            if (notificationPermission === 'granted') {
-                statusDiv.className = 'notification-status status-granted';
-                statusDiv.innerHTML = '✅ Browser notifications are enabled! You\'ll receive automatic reminders.';
-            } else if (notificationPermission === 'denied') {
-                statusDiv.className = 'notification-status status-denied';
-                statusDiv.innerHTML = '❌ Notifications blocked. Please enable in browser settings.';
-            } else {
-                statusDiv.className = 'notification-status status-pending';
-                statusDiv.innerHTML = '⏳ Click "Enable Browser Notifications" to get automatic reminders.';
-            }
-        }
-
-        function showCustomNotification(title, message) {
-            const popup = document.getElementById('notificationPopup');
-            const content = document.getElementById('notificationContent');
-            
-            content.innerHTML = `<h4>${title}</h4><p>${message}</p>`;
-            popup.classList.add('show');
-            
-            // Auto-hide after 10 seconds
-            setTimeout(() => {
-                closeNotification();
-            }, 10000);
-        }
-
-        function closeNotification() {
-            document.getElementById('notificationPopup').classList.remove('show');
         }
 
         // Voice recognition functions
@@ -1026,102 +1022,64 @@
             document.getElementById('voiceStatus').textContent = message;
         }
 
-        
-// Enhanced Voice Command Processing with Web Search Integration
-async function processVoiceCommand(command) {
-    const lowerCommand = command.toLowerCase();
-    let response = '';
-    
-    // Check if it's about the existing medicine schedule first
-    if (lowerCommand.includes('father') && (lowerCommand.includes('medicine') || lowerCommand.includes('medication'))) {
-        response = 'Father takes Maxi PhD before breakfast, then Metolol, Pilclop, Cordarone, Orofer and Hyqvit after breakfast. Acitrom at 4 PM, and Rotin F with Telmiford at night.';
-    } else if (lowerCommand.includes('mother') && (lowerCommand.includes('medicine') || lowerCommand.includes('medication'))) {
-        response = 'Mother takes Telzox H, Cinod and Zavamet after breakfast. Then Cinod and Zavamet again at night.';
-    } else if (lowerCommand.includes('stock') || lowerCommand.includes('count')) {
-        response = 'Let me check the stock levels...';
-        let lowStockItems = [];
-        Object.keys(medicineData).forEach(person => {
-            Object.keys(medicineData[person]).forEach(timeSlot => {
-                medicineData[person][timeSlot].forEach(medicine => {
-                    if (medicine.stock <= 5) {
-                        lowStockItems.push(`${medicine.name} has ${medicine.stock} left`);
-                    }
+        // Enhanced Voice Command Processing
+        async function processVoiceCommand(command) {
+            const lowerCommand = command.toLowerCase();
+            let response = '';
+            
+            // Check if it's about the existing medicine schedule first
+            if (lowerCommand.includes('father') && (lowerCommand.includes('medicine') || lowerCommand.includes('medication'))) {
+                response = 'Father takes Maxi PhD before breakfast, then Metolol, Pilclop, Cordarone, Orofer and Hyqvit after breakfast. Acitrom at 4 PM, and Rotin F with Telmiford at night.';
+            } else if (lowerCommand.includes('mother') && (lowerCommand.includes('medicine') || lowerCommand.includes('medication'))) {
+                response = 'Mother takes Telzox H, Cinod and Zavamet after breakfast. Then Cinod and Zavamet again at night.';
+            } else if (lowerCommand.includes('stock') || lowerCommand.includes('count')) {
+                response = 'Let me check the stock levels...';
+                let lowStockItems = [];
+                Object.keys(medicineData).forEach(person => {
+                    Object.keys(medicineData[person]).forEach(timeSlot => {
+                        medicineData[person][timeSlot].forEach(medicine => {
+                            if (medicine.stock <= 5) {
+                                lowStockItems.push(`${medicine.name} has ${medicine.stock} left`);
+                            }
+                        });
+                    });
                 });
-            });
-        });
-        if (lowStockItems.length > 0) {
-            response += ' Warning: ' + lowStockItems.join(', ');
-        } else {
-            response += ' All medicines have adequate stock levels.';
+                if (lowStockItems.length > 0) {
+                    response += ' Warning: ' + lowStockItems.join(', ');
+                } else {
+                    response += ' All medicines have adequate stock levels.';
+                }
+            } else if (lowerCommand.includes('history') || lowerCommand.includes('taken yesterday')) {
+                response = 'Checking medicine history... ';
+                const yesterday = getYesterdayKey();
+                let historyInfo = [];
+                Object.keys(medicineData).forEach(person => {
+                    Object.keys(medicineData[person]).forEach(timeSlot => {
+                        medicineData[person][timeSlot].forEach(medicine => {
+                            const history = getMedicineHistory(medicine.storageKey);
+                            const yesterdayRecord = history.find(h => h.date === yesterday);
+                            if (yesterdayRecord && yesterdayRecord.taken) {
+                                historyInfo.push(`${medicine.name} was taken yesterday`);
+                            }
+                        });
+                    });
+                });
+                response += historyInfo.length > 0 ? historyInfo.join(', ') : 'No medicine history available for yesterday.';
+            }
+            // Keep existing medicine information responses...
+            else if (lowerCommand.includes('paracetamol') || lowerCommand.includes('acetaminophen')) {
+                response = 'Paracetamol (Acetaminophen): Take 500-1000mg every 4-6 hours as needed for pain or fever. Maximum 4000mg per day. Can be taken with or without food. Wait at least 4 hours between doses.';
+            } else if (lowerCommand.includes('ibuprofen')) {
+                response = 'Ibuprofen: Take 200-400mg every 4-6 hours as needed for pain, fever, or inflammation. Maximum 1200mg per day without doctor supervision. Take with food to avoid stomach upset. Not recommended if you have stomach ulcers or kidney problems.';
+            } else if (lowerCommand.includes('reset') || lowerCommand.includes('reset stock')) {
+                response = 'To reset stock levels, please use the reset button in the interface. This will restore all medicines to their original stock levels.';
+            } else {
+                response = 'I\'m MediBot, your medicine assistant! I can help with: Family medicine schedules, stock levels, medicine history, general medicine information, and stock management. What would you like to know?';
+            }
+            
+            document.getElementById('voiceResponse').textContent = response;
+            speak(response);
         }
-    } 
-    // Enhanced medicine information queries
-    else if (lowerCommand.includes('paracetamol') || lowerCommand.includes('acetaminophen')) {
-        response = 'Paracetamol (Acetaminophen): Take 500-1000mg every 4-6 hours as needed for pain or fever. Maximum 4000mg per day. Can be taken with or without food. Wait at least 4 hours between doses.';
-    } else if (lowerCommand.includes('ibuprofen')) {
-        response = 'Ibuprofen: Take 200-400mg every 4-6 hours as needed for pain, fever, or inflammation. Maximum 1200mg per day without doctor supervision. Take with food to avoid stomach upset. Not recommended if you have stomach ulcers or kidney problems.';
-    } else if (lowerCommand.includes('aspirin')) {
-        response = 'Aspirin: For pain/fever: 325-650mg every 4 hours. For heart protection: 81mg daily (consult doctor first). Take with food to reduce stomach irritation. Avoid if allergic to aspirin or if you have bleeding disorders.';
-    } else if (lowerCommand.includes('vitamin d')) {
-        response = 'Vitamin D: Typical dose is 1000-2000 IU daily with a meal containing fat for better absorption. Best taken in morning. Get blood levels checked annually to ensure optimal range.';
-    } else if (lowerCommand.includes('vitamin c')) {
-        response = 'Vitamin C: Typical dose is 500-1000mg daily. Take with food to reduce stomach upset. Divide large doses throughout the day for better absorption. Excess is usually excreted safely.';
-    } else if (lowerCommand.includes('calcium')) {
-        response = 'Calcium: Take 500-600mg at a time with food for best absorption. Don\'t take with iron supplements. Best absorbed when taken separately from high-fiber meals. Include vitamin D for better absorption.';
-    } else if (lowerCommand.includes('iron')) {
-        response = 'Iron: Take on empty stomach for best absorption, or with vitamin C. If stomach upset occurs, take with small amount of food. Avoid with tea, coffee, or calcium. Take 2 hours apart from other medications.';
-    } else if (lowerCommand.includes('antibiotic')) {
-        response = 'Antibiotics: Always complete the full course even if feeling better. Take at evenly spaced intervals. Some need food, others need empty stomach - check your specific medication. Don\'t share with others or save leftover pills.';
-    } else if (lowerCommand.includes('blood pressure') || lowerCommand.includes('bp medicine')) {
-        response = 'Blood pressure medications: Take at the same time daily, usually morning. Don\'t skip doses. Monitor BP regularly. Don\'t stop suddenly without doctor consultation. Common types include ACE inhibitors, beta-blockers, and diuretics.';
-    } else if (lowerCommand.includes('diabetes') || lowerCommand.includes('metformin')) {
-        response = 'Diabetes medications: Take with meals to reduce stomach upset. Monitor blood sugar as directed. Metformin is usually taken twice daily with breakfast and dinner. Always carry glucose tablets for low blood sugar emergencies.';
-    }
-    // General medicine timing queries
-    else if (lowerCommand.includes('when') && lowerCommand.includes('take')) {
-        if (lowerCommand.includes('morning')) {
-            response = 'Morning medicines are typically taken: Before breakfast (7-8 AM) or After breakfast (9-10 AM). Check your specific medication instructions for "with food" or "empty stomach" requirements.';
-        } else if (lowerCommand.includes('night') || lowerCommand.includes('evening')) {
-            response = 'Evening medicines are typically taken: After dinner (8-10 PM) or Before bedtime (10-11 PM). Some medications work better at night, like certain blood pressure medicines and cholesterol medications.';
-        } else {
-            response = 'Medicine timing depends on the specific medication. Generally: Morning medicines after breakfast, afternoon medicines before lunch, and evening medicines after dinner. Always follow your doctor\'s specific instructions.';
-        }
-    }
-    // Side effects queries
-    else if (lowerCommand.includes('side effect')) {
-        response = 'Common medicine side effects include nausea, dizziness, drowsiness, or stomach upset. Always read the medication leaflet. Contact your doctor if you experience severe side effects, allergic reactions, or if side effects persist. Never stop prescribed medications without consulting your healthcare provider.';
-    }
-    // Food interactions
-    else if (lowerCommand.includes('food') || lowerCommand.includes('eat')) {
-        response = 'Medicine and food interactions: Some medicines need food to prevent stomach upset, others need empty stomach for absorption. Avoid alcohol with most medications. Grapefruit can interact with many medicines. High-fiber foods can reduce absorption of some drugs. Always check your specific medication instructions.';
-    }
-    // Emergency situations
-    else if (lowerCommand.includes('overdose') || lowerCommand.includes('too much')) {
-        response = 'If you suspect overdose: Call emergency services immediately or contact poison control. Don\'t wait for symptoms. Bring the medication bottle with you. Never induce vomiting unless specifically told by medical professionals.';
-    } else if (lowerCommand.includes('missed dose') || lowerCommand.includes('forgot')) {
-        response = 'For missed doses: Take as soon as you remember unless it\'s almost time for the next dose. Never double dose. For critical medications like heart or seizure medicines, contact your doctor. Set alarms or use pill organizers to prevent missed doses.';
-    }
-    // General health queries
-    else if (lowerCommand.includes('how often') || lowerCommand.includes('how many times')) {
-        response = 'Medication frequency varies: Once daily (every 24 hours), Twice daily (every 12 hours), Three times daily (every 8 hours), Four times daily (every 6 hours). "As needed" means only when symptoms occur, not on a schedule. Always follow your prescription label.';
-    } else if (lowerCommand.includes('storage') || lowerCommand.includes('store')) {
-        response = 'Medicine storage: Keep in cool, dry place away from light. Bathroom medicine cabinets are too humid. Don\'t freeze unless specified. Keep in original containers with labels. Dispose of expired medicines safely at pharmacy take-back programs.';
-    }
-    // If no specific medicine info found, provide general guidance
-    else if (lowerCommand.includes('medicine') || lowerCommand.includes('medication') || lowerCommand.includes('drug') || lowerCommand.includes('pill') || lowerCommand.includes('tablet')) {
-        response = 'I can help with general medicine information, timing, and the family schedule. For specific medications, always consult your doctor or pharmacist. Ask me about common medicines like paracetamol, ibuprofen, or about medicine timing, side effects, or interactions.';
-    } 
-    // System-specific queries
-    else if (lowerCommand.includes('schedule') || lowerCommand.includes('reminder')) {
-        response = 'Current reminders are set for: 8 AM (Father\'s morning medicine), 10 AM (after-breakfast medicines), 4 PM (Acitrom), and 10 PM (evening medicines). I can also provide general medicine timing advice.';
-    } else {
-        response = 'I\'m MediBot, your medicine assistant! I can help with: Family medicine schedules, stock levels, general medicine information (paracetamol, ibuprofen, etc.), timing advice, side effects, and medication safety. What would you like to know?';
-    }
-    
-    document.getElementById('voiceResponse').textContent = response;
-    speak(response);
-}
-
 
         function speak(text) {
             if (speechSynthesis && speechSynthesis.speaking) {
@@ -1142,7 +1100,7 @@ async function processVoiceCommand(command) {
             }
         }
 
-        // Medicine schedule functions
+        // Enhanced medicine schedule functions with fixed stock tracking
         function populateMedicineSchedules() {
             // Father's schedules
             populateTimeSlot('fatherMorningBefore', medicineData.father.morningBefore, 'father');
@@ -1177,18 +1135,21 @@ async function processVoiceCommand(command) {
                         <div class="control-buttons">
                             <input type="checkbox" class="dose-checkbox" 
                                    id="dose_${medicine.storageKey}" 
-                                   ${isTakenToday ? 'checked' : ''}
+                                   ${isTakenToday ? 'checked disabled' : ''}
                                    onchange="toggleDoseTaken('${medicine.storageKey}', this.checked)">
                             <label for="dose_${medicine.storageKey}" class="dose-label">
-                                ${isTakenToday ? '✅ Taken today' : '⏳ Not taken today'}
+                                ${isTakenToday ? '✅ Taken today (Fixed)' : '⏳ Not taken today'}
                             </label>
                         </div>
-                        ${isTakenToday ? '<div class="today-status">✅ Completed for today</div>' : ''}
+                        ${isTakenToday ? '<div class="today-status">✅ Completed for today - Stock deducted</div>' : ''}
                     </div>
                     <div class="medicine-stock">
                         <div class="stock-count ${isLowStock ? 'low' : ''}">${medicine.stock}</div>
                         <div class="stock-label">tablets left</div>
-                        <button class="btn btn-add" onclick="addStock('${medicine.storageKey}')">+ Add Stock</button>
+                        <div class="stock-info">
+                            <small>Started with: ${medicine.originalStock}</small><br>
+                            <small>Used: ${medicine.originalStock - medicine.stock}</small>
+                        </div>
                     </div>
                 `;
                 
@@ -1196,62 +1157,57 @@ async function processVoiceCommand(command) {
             });
         }
 
-        // Dose tracking functions
+        // Enhanced dose tracking with permanent stock changes
         function toggleDoseTaken(storageKey, taken) {
-            markTakenToday(storageKey, taken);
-            
-            // Update the medicine display
-            populateMedicineSchedules();
-            
-            if (taken) {
-                // Reduce stock count
+            // Only allow taking medicine, not untaking once marked
+            if (taken && !wasTakenToday(storageKey)) {
+                markTakenToday(storageKey, true);
+                
+                // Permanently reduce stock count
                 reduceMedicineStock(storageKey);
-                speak("Dose marked as taken. Stock updated.");
-            } else {
-                // Increase stock count back
-                increaseMedicineStock(storageKey);
-                speak("Dose unmarked. Stock restored.");
+                
+                // Update display
+                populateMedicineSchedules();
+                generateStockAlerts();
+                
+                speak("Dose marked as taken. Stock permanently updated.");
             }
-            
-            // Refresh displays
-            generateStockAlerts();
         }
 
         function reduceMedicineStock(storageKey) {
-            // Find and reduce stock
+            // Find and reduce stock permanently
             Object.keys(medicineData).forEach(person => {
                 Object.keys(medicineData[person]).forEach(timeSlot => {
                     medicineData[person][timeSlot].forEach((medicine) => {
                         if (medicine.storageKey === storageKey && medicine.stock > 0) {
                             medicine.stock--;
                             saveToStorage(medicine.storageKey + '_stock', medicine.stock);
+                            
+                            // Log the consumption
+                            const consumptionLog = getFromStorage('consumption_log') || [];
+                            consumptionLog.push({
+                                medicine: medicine.name,
+                                date: getTodayKey(),
+                                stockAfter: medicine.stock
+                            });
+                            saveToStorage('consumption_log', consumptionLog);
                         }
                     });
                 });
             });
         }
 
-        function increaseMedicineStock(storageKey) {
-            // Find and increase stock
-            Object.keys(medicineData).forEach(person => {
-                Object.keys(medicineData[person]).forEach(timeSlot => {
-                    medicineData[person][timeSlot].forEach((medicine) => {
-                        if (medicine.storageKey === storageKey && medicine.stock < medicine.originalStock) {
-                            medicine.stock++;
-                            saveToStorage(medicine.storageKey + '_stock', medicine.stock);
-                        }
-                    });
-                });
-            });
-        }
-
-        function addStock(storageKey, amount = 10) {
+        // Enhanced stock management functions
+        function addStock(storageKey, amount = 30) {
             Object.keys(medicineData).forEach(person => {
                 Object.keys(medicineData[person]).forEach(timeSlot => {
                     medicineData[person][timeSlot].forEach((medicine) => {
                         if (medicine.storageKey === storageKey) {
                             medicine.stock += amount;
+                            medicine.originalStock = Math.max(medicine.originalStock, medicine.stock);
                             saveToStorage(medicine.storageKey + '_stock', medicine.stock);
+                            saveToStorage(medicine.storageKey + '_originalStock', medicine.originalStock);
+                            
                             populateMedicineSchedules();
                             generateStockAlerts();
                             speak(`Added ${amount} tablets to ${medicine.name}. New stock: ${medicine.stock}`);
@@ -1261,7 +1217,37 @@ async function processVoiceCommand(command) {
             });
         }
 
-        // Stock alert functions
+        // Reset all stock levels to original values
+        function resetAllStock() {
+            if (confirm('Are you sure you want to reset all stock levels to original values? This will also clear all dose tracking history.')) {
+                Object.keys(medicineData).forEach(person => {
+                    Object.keys(medicineData[person]).forEach(timeSlot => {
+                        medicineData[person][timeSlot].forEach((medicine) => {
+                            medicine.stock = medicine.originalStock;
+                            saveToStorage(medicine.storageKey + '_stock', medicine.stock);
+                            
+                            // Clear history
+                            saveToStorage(medicine.storageKey + '_history', []);
+                            
+                            // Clear today's tracking
+                            const todayKey = getTodayKey();
+                            saveToStorage(medicine.storageKey + '_taken_' + todayKey, false);
+                        });
+                    });
+                });
+                
+                // Clear consumption log
+                saveToStorage('consumption_log', []);
+                
+                // Refresh displays
+                populateMedicineSchedules();
+                generateStockAlerts();
+                
+                speak('All stock levels have been reset to original values.');
+            }
+        }
+
+        // Enhanced stock alert functions
         function generateStockAlerts() {
             const container = document.getElementById('stockAlerts');
             container.innerHTML = '';
@@ -1271,7 +1257,7 @@ async function processVoiceCommand(command) {
             Object.keys(medicineData).forEach(person => {
                 Object.keys(medicineData[person]).forEach(timeSlot => {
                     medicineData[person][timeSlot].forEach((medicine) => {
-                        if (medicine.stock <= 10) { // Show alerts for stocks <= 10
+                        if (medicine.stock <= 10) {
                             hasLowStock = true;
                             const alertDiv = document.createElement('div');
                             
@@ -1285,6 +1271,9 @@ async function processVoiceCommand(command) {
                                 alertTitle = 'URGENT: Critical Stock';
                             }
                             
+                            const daysUsed = medicine.originalStock - medicine.stock;
+                            const daysRemaining = medicine.stock;
+                            
                             alertDiv.className = alertClass;
                             alertDiv.innerHTML = `
                                 <span class="alert-icon">${alertIcon}</span>
@@ -1293,6 +1282,7 @@ async function processVoiceCommand(command) {
                                     <strong>${medicine.name}</strong> - Only ${medicine.stock} tablets remaining!<br>
                                     <small>Person: ${person.charAt(0).toUpperCase() + person.slice(1)} | 
                                     Dosage: ${medicine.dosage}</small><br>
+                                    <small>Used: ${daysUsed} days | Remaining: ~${daysRemaining} days</small><br>
                                     <button class="btn btn-add" onclick="addStock('${medicine.storageKey}', 30)" 
                                             style="margin-top: 10px;">
                                         📦 Refill Stock (+30)
@@ -1307,12 +1297,30 @@ async function processVoiceCommand(command) {
             });
             
             if (!hasLowStock) {
+                const totalMedicines = Object.values(medicineData).reduce((total, person) => 
+                    total + Object.values(person).reduce((subtotal, timeSlot) => 
+                        subtotal + timeSlot.length, 0), 0);
+                
                 container.innerHTML = `
                     <div style="text-align: center; padding: 40px; color: #28a745;">
                         <h3>✅ All Good!</h3>
-                        <p>All medicines have adequate stock levels.</p>
+                        <p>All ${totalMedicines} medicines have adequate stock levels.</p>
+                        <button class="btn btn-secondary" onclick="resetAllStock()" style="margin-top: 15px;">
+                            🔄 Reset All Stock Levels
+                        </button>
                     </div>
                 `;
+            } else {
+                // Add reset button even when there are alerts
+                const resetDiv = document.createElement('div');
+                resetDiv.style.textAlign = 'center';
+                resetDiv.style.marginTop = '20px';
+                resetDiv.innerHTML = `
+                    <button class="btn btn-secondary" onclick="resetAllStock()">
+                        🔄 Reset All Stock Levels
+                    </button>
+                `;
+                container.appendChild(resetDiv);
             }
         }
 
@@ -1371,182 +1379,412 @@ async function processVoiceCommand(command) {
         function triggerReminder(reminder) {
             const message = reminder.message;
             
-            // Show browser notification
-            if (notificationPermission === 'granted') {
-                new Notification('🔔 Medicine Reminder', {
-                    body: message,
-                    icon: 'https://via.placeholder.com/64/667eea/ffffff?text=💊',
-                    requireInteraction: true
-                });
-            }
-            
-            // Show custom notification
-            showCustomNotification('🔔 Medicine Reminder', message);
-            
-            // Speak reminder
+            // Only speak reminder (no browser notifications)
             speak(`Medicine reminder: ${message}`);
         }
 
-        // Additional utility functions
-        function setupWebReminders() {
-            alert('Web reminders are already active! Keep this tab open or install as an app for notifications.');
-        }
-function downloadCalendar() {
-    // Try to use Web Calendar API if available
-    if ('calendar' in navigator) {
-        // Future API - not widely supported yet
-        alert('Calendar API integration coming soon. For now, please manually add these reminders to your calendar:\n\n' +
-              reminderTimes.map(r => `${r.time} - ${r.message}`).join('\n'));
-        return;
-    }
-    
-    // Create Google Calendar links for each reminder
-    const calendarLinks = [];
-    const baseGoogleCalendarUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE';
-    
-    reminderTimes.forEach((reminder, index) => {
-        const [hours, minutes] = reminder.time.split(':');
-        const now = new Date();
-        const eventDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
-        
-        // Format date for Google Calendar (YYYYMMDDTHHMMSSZ)
-        const startTime = eventDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-        const endTime = new Date(eventDate.getTime() + 15 * 60000).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-        
-        const params = new URLSearchParams({
-            text: `Medicine Reminder: ${reminder.message}`,
-            dates: `${startTime}/${endTime}`,
-            details: `Medicine Reminder - ${reminder.medicines.join(', ')}`,
-            recur: 'RRULE:FREQ=DAILY',
-            ctz: Intl.DateTimeFormat().resolvedOptions().timeZone
-        });
-        
-        calendarLinks.push({
-            time: reminder.time,
-            message: reminder.message,
-            url: `${baseGoogleCalendarUrl}&${params.toString()}`
-        });
-    });
-    
-    // Create a popup window with calendar options
-    const calendarWindow = window.open('', 'calendar', 'width=600,height=800,scrollbars=yes');
-    calendarWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Add Medicine Reminders to Calendar</title>
-            <style>
-                body { font-family: Arial, sans-serif; padding: 20px; }
-                .reminder-item { 
-                    background: #f5f5f5; 
-                    padding: 15px; 
-                    margin: 10px 0; 
-                    border-radius: 5px; 
-                    border-left: 4px solid #007bff;
-                }
-                .calendar-btn {
-                    background: #4285f4;
-                    color: white;
-                    padding: 10px 15px;
-                    text-decoration: none;
-                    border-radius: 5px;
-                    margin: 5px;
-                    display: inline-block;
-                }
-                .calendar-btn:hover { background: #3367d6; }
-                .instructions {
-                    background: #e7f3ff;
-                    padding: 15px;
-                    border-radius: 5px;
-                    margin-bottom: 20px;
-                }
-            </style>
-        </head>
-        <body>
-            <h2>📅 Add Medicine Reminders to Your Calendar</h2>
-            <div class="instructions">
-                <strong>Instructions:</strong><br>
-                • Click the "Add to Google Calendar" button for each reminder<br>
-                • Each link will open in a new tab with the event pre-filled<br>
-                • Click "Save" in Google Calendar to add the recurring reminder<br>
-                • For other calendar apps, manually create recurring events with the times shown
-            </div>
+        // Calendar download function (only notification method retained)
+        function downloadCalendar() {
+            // Create Google Calendar links for each reminder
+            const calendarLinks = [];
+            const baseGoogleCalendarUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE';
             
-            ${calendarLinks.map(link => `
-                <div class="reminder-item">
-                    <strong>⏰ ${link.time}</strong><br>
-                    ${link.message}<br><br>
-                    <a href="${link.url}" target="_blank" class="calendar-btn">
-                        📅 Add to Google Calendar
-                    </a>
-                </div>
-            `).join('')}
+            reminderTimes.forEach((reminder, index) => {
+                const [hours, minutes] = reminder.time.split(':');
+                const now = new Date();
+                const eventDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+                
+                // Format date for Google Calendar (YYYYMMDDTHHMMSSZ)
+                const startTime = eventDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                const endTime = new Date(eventDate.getTime() + 15 * 60000).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                
+                const params = new URLSearchParams({
+                    text: `Medicine Reminder: ${reminder.message}`,
+                    dates: `${startTime}/${endTime}`,
+                    details: `Medicine Reminder - ${reminder.medicines.join(', ')}`,
+                    recur: 'RRULE:FREQ=DAILY',
+                    ctz: Intl.DateTimeFormat().resolvedOptions().timeZone
+                });
+                
+                calendarLinks.push({
+                    time: reminder.time,
+                    message: reminder.message,
+                    url: `${baseGoogleCalendarUrl}&${params.toString()}`
+                });
+            });
             
-            <div style="margin-top: 30px; padding: 15px; background: #fff3cd; border-radius: 5px;">
-                <strong>💡 Alternative Methods:</strong><br>
-                • <strong>iPhone:</strong> Use Siri - "Hey Siri, remind me to take medicine at [time] every day"<br>
-                • <strong>Android:</strong> Use Google Assistant - "Hey Google, set a daily reminder for [time] to take medicine"<br>
-                • <strong>Manual:</strong> Create recurring events in your preferred calendar app
-            </div>
-            
-            <button onclick="window.close()" style="margin-top: 20px; padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px;">
-                Close
-            </button>
-        </body>
-        </html>
-    `);
-}
-
-        function setupEmailReminders() {
-            const subject = 'Medicine Reminder Schedule';
-            const body = encodeURIComponent(`
-Hello,
-
-Here are your daily medicine reminders:
-
-${reminderTimes.map(r => `${r.time} - ${r.message}`).join('\n')}
-
-Best regards,
-MediBot System
+            // Create a popup window with calendar options
+            const calendarWindow = window.open('', 'calendar', 'width=600,height=800,scrollbars=yes');
+            calendarWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Add Medicine Reminders to Calendar</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        .reminder-item { 
+                            background: #f5f5f5; 
+                            padding: 15px; 
+                            margin: 10px 0; 
+                            border-radius: 5px; 
+                            border-left: 4px solid #007bff;
+                        }
+                        .calendar-btn {
+                            background: #4285f4;
+                            color: white;
+                            padding: 10px 20px;
+                            border: none;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            text-decoration: none;
+                            display: inline-block;
+                            margin: 5px;
+                        }
+                        .calendar-btn:hover { background: #3367d6; }
+                        .instructions {
+                            background: #e8f4fd;
+                            padding: 15px;
+                            border-radius: 5px;
+                            margin-bottom: 20px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h2>📅 Add Medicine Reminders to Google Calendar</h2>
+                    <div class="instructions">
+                        <strong>Instructions:</strong> Click on each reminder below to add it to your Google Calendar. 
+                        Each reminder will be set to repeat daily at the specified time.
+                    </div>
+                    ${calendarLinks.map(link => `
+                        <div class="reminder-item">
+                            <h4>🕐 ${link.time} - ${link.message}</h4>
+                            <a href="${link.url}" target="_blank" class="calendar-btn">
+                                📅 Add to Google Calendar
+                            </a>
+                        </div>
+                    `).join('')}
+                    <div style="margin-top: 30px; text-align: center;">
+                        <button onclick="window.close()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                            Close Window
+                        </button>
+                    </div>
+                </body>
+                </html>
             `);
-            
-            window.open(`mailto:?subject=${subject}&body=${body}`);
+            calendarWindow.document.close();
         }
 
-        // Tab navigation
-        function showTab(tabName) {
-            // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
+        // Show report with consumption history and analytics
+        function showReport() {
+            const reportWindow = window.open('', 'report', 'width=800,height=900,scrollbars=yes');
+            
+            // Calculate statistics
+            const consumptionLog = getFromStorage('consumption_log') || [];
+            const today = getTodayKey();
+            const yesterday = getYesterdayKey();
+            
+            let todayConsumption = 0;
+            let yesterdayConsumption = 0;
+            let totalConsumption = 0;
+            let medicineStats = {};
+            
+            consumptionLog.forEach(entry => {
+                totalConsumption++;
+                if (entry.date === today) todayConsumption++;
+                if (entry.date === yesterday) yesterdayConsumption++;
+                
+                if (!medicineStats[entry.medicine]) {
+                    medicineStats[entry.medicine] = { count: 0, dates: [] };
+                }
+                medicineStats[entry.medicine].count++;
+                medicineStats[entry.medicine].dates.push(entry.date);
             });
             
-            // Remove active class from all nav tabs
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
+            // Generate stock status
+            let stockReport = '';
+            let totalMedicines = 0;
+            let lowStockCount = 0;
+            let criticalStockCount = 0;
+            
+            Object.keys(medicineData).forEach(person => {
+                stockReport += `<h4>${person.charAt(0).toUpperCase() + person.slice(1)}'s Medicines:</h4><ul>`;
+                Object.keys(medicineData[person]).forEach(timeSlot => {
+                    medicineData[person][timeSlot].forEach(medicine => {
+                        totalMedicines++;
+                        let status = '✅ Good';
+                        if (medicine.stock <= 2) {
+                            status = '🚨 Critical';
+                            criticalStockCount++;
+                        } else if (medicine.stock <= 5) {
+                            status = '⚠️ Low';
+                            lowStockCount++;
+                        }
+                        
+                        const daysUsed = medicine.originalStock - medicine.stock;
+                        stockReport += `
+                            <li>
+                                <strong>${medicine.name}</strong> - ${medicine.stock} tablets left ${status}<br>
+                                <small>Used ${daysUsed} doses | ${medicine.dosage}</small>
+                            </li>
+                        `;
+                    });
+                });
+                stockReport += '</ul>';
             });
             
-            // Show selected tab content
-            document.getElementById(tabName).classList.add('active');
+            // Calculate adherence rate
+            const expectedDosesToday = Object.values(medicineData).reduce((total, person) => 
+                total + Object.values(person).reduce((subtotal, timeSlot) => 
+                    subtotal + timeSlot.length, 0), 0);
             
-            // Add active class to clicked nav tab
+            const adherenceRate = expectedDosesToday > 0 ? Math.round((todayConsumption / expectedDosesToday) * 100) : 0;
+            
+            reportWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>MediBot Analytics Report</title>
+                    <style>
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            padding: 20px; 
+                            line-height: 1.6;
+                            background: #f8f9fa;
+                        }
+                        .report-header {
+                            background: linear-gradient(135deg, #007bff, #0056b3);
+                            color: white;
+                            padding: 20px;
+                            border-radius: 10px;
+                            text-align: center;
+                            margin-bottom: 30px;
+                        }
+                        .stats-grid {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                            gap: 20px;
+                            margin-bottom: 30px;
+                        }
+                        .stat-card {
+                            background: white;
+                            padding: 20px;
+                            border-radius: 10px;
+                            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                            text-align: center;
+                        }
+                        .stat-number {
+                            font-size: 2em;
+                            font-weight: bold;
+                            color: #007bff;
+                        }
+                        .section {
+                            background: white;
+                            padding: 20px;
+                            border-radius: 10px;
+                            margin-bottom: 20px;
+                            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        .adherence-bar {
+                            width: 100%;
+                            height: 20px;
+                            background: #e9ecef;
+                            border-radius: 10px;
+                            overflow: hidden;
+                            margin: 10px 0;
+                        }
+                        .adherence-fill {
+                            height: 100%;
+                            background: linear-gradient(90deg, #28a745, #20c997);
+                            width: ${adherenceRate}%;
+                            transition: width 0.5s ease;
+                        }
+                        .medicine-stat {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            padding: 8px 0;
+                            border-bottom: 1px solid #eee;
+                        }
+                        .print-btn {
+                            background: #28a745;
+                            color: white;
+                            padding: 10px 20px;
+                            border: none;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            margin: 10px;
+                        }
+                        .close-btn {
+                            background: #6c757d;
+                            color: white;
+                            padding: 10px 20px;
+                            border: none;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            margin: 10px;
+                        }
+                        @media print {
+                            .no-print { display: none !important; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="report-header">
+                        <h1>📊 MediBot Analytics Report</h1>
+                        <p>Generated on ${new Date().toLocaleString()}</p>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number">${adherenceRate}%</div>
+                            <div>Today's Adherence Rate</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${todayConsumption}</div>
+                            <div>Doses Taken Today</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${totalConsumption}</div>
+                            <div>Total Doses Tracked</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${totalMedicines}</div>
+                            <div>Total Medicines</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <h3>📈 Adherence Progress</h3>
+                        <p>Today's medication adherence: <strong>${todayConsumption} of ${expectedDosesToday} doses</strong></p>
+                        <div class="adherence-bar">
+                            <div class="adherence-fill"></div>
+                        </div>
+                        <p style="font-size: 0.9em; color: #666;">
+                            Yesterday: ${yesterdayConsumption} doses completed
+                        </p>
+                    </div>
+                    
+                    <div class="section">
+                        <h3>📦 Stock Status Overview</h3>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-number" style="color: #28a745;">${totalMedicines - lowStockCount - criticalStockCount}</div>
+                                <div>Good Stock</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" style="color: #ffc107;">${lowStockCount}</div>
+                                <div>Low Stock</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" style="color: #dc3545;">${criticalStockCount}</div>
+                                <div>Critical Stock</div>
+                            </div>
+                        </div>
+                        ${stockReport}
+                    </div>
+                    
+                    <div class="section">
+                        <h3>💊 Medicine Usage Statistics</h3>
+                        ${Object.keys(medicineStats).map(medicine => `
+                            <div class="medicine-stat">
+                                <span><strong>${medicine}</strong></span>
+                                <span>${medicineStats[medicine].count} doses taken</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="section no-print" style="text-align: center;">
+                        <button class="print-btn" onclick="window.print()">🖨️ Print Report</button>
+                        <button class="close-btn" onclick="window.close()">❌ Close</button>
+                    </div>
+                </body>
+                </html>
+            `);
+            reportWindow.document.close();
+        }
+
+        // Navigation functions
+        function showSection(sectionId) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => section.classList.remove('active'));
+            
+            // Remove active class from all nav items
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Add active class to clicked nav item
             event.target.classList.add('active');
+            
+            // Special handling for different sections
+            if (sectionId === 'stockSection') {
+                generateStockAlerts();
+            } else if (sectionId === 'scheduleSection') {
+                populateMedicineSchedules();
+            }
         }
 
-        // Initialize the app when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("DOM loaded, initializing app...");
-            init();
-            updateNotificationStatus();
-        });
+        // Emergency contact function
+        function callEmergency() {
+            const emergencyNumbers = [
+                { service: 'Emergency Services', number: '911' },
+                { service: 'Poison Control', number: '1-800-222-1222' },
+                { service: 'Family Doctor', number: 'Add your doctor\'s number' }
+            ];
+            
+            let message = 'Emergency Contacts:\n\n';
+            emergencyNumbers.forEach(contact => {
+                message += `${contact.service}: ${contact.number}\n`;
+            });
+            
+            alert(message);
+            speak('Emergency contacts displayed. Please call the appropriate number for help.');
+        }
 
-        // Handle page visibility changes
-        document.addEventListener('visibilitychange', function() {
-            if (!document.hidden) {
-                // Page became visible, refresh data
-                populateMedicineSchedules();
-                generateStockAlerts();
-                checkLowStockReminders();
-            }
+        // Export data function
+        function exportData() {
+            const exportData = {
+                timestamp: new Date().toISOString(),
+                medicineData: medicineData,
+                consumptionLog: getFromStorage('consumption_log') || [],
+                lastActiveDay: getFromStorage('lastActiveDay'),
+                stockLevels: {}
+            };
+            
+            // Add current stock levels
+            Object.keys(medicineData).forEach(person => {
+                Object.keys(medicineData[person]).forEach(timeSlot => {
+                    medicineData[person][timeSlot].forEach(medicine => {
+                        exportData.stockLevels[medicine.storageKey] = {
+                            name: medicine.name,
+                            currentStock: medicine.stock,
+                            originalStock: medicine.originalStock,
+                            history: getMedicineHistory(medicine.storageKey)
+                        };
+                    });
+                });
+            });
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `medibot-data-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            speak('Medicine data exported successfully.');
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+
+        // Cleanup intervals when page unloads
+        window.addEventListener('beforeunload', () => {
+            reminderIntervals.forEach(interval => clearInterval(interval));
         });
     </script>
 </body>
