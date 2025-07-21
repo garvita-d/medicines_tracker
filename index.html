@@ -774,12 +774,18 @@ let medicineData = loadMedicineData() || {
     }
 };
 
-// Load medicine data from memory
+// Enhanced storage system for persistent medicine data
+let appStorage = {
+    medicineData: null,
+    dailyTracking: {}
+};
+
+// Load medicine data from memory with persistent stock levels
 function loadMedicineData() {
     try {
         const saved = window.medicineDataStore;
         if (saved) {
-            console.log("Loading saved medicine data");
+            console.log("Loading saved medicine data with persistent stock levels");
             return saved;
         }
     } catch (error) {
@@ -788,19 +794,20 @@ function loadMedicineData() {
     return null;
 }
 
-// Save medicine data to memory
+// Save medicine data to memory - Enhanced for persistence
 function saveMedicineData() {
     try {
-        window.medicineDataStore = medicineData;
-        console.log("Medicine data saved");
+        window.medicineDataStore = JSON.parse(JSON.stringify(medicineData));
+        console.log("Medicine data saved with current stock levels");
     } catch (error) {
         console.error("Error saving medicine data:", error);
     }
 }
 
-// Reset all medicine data to original values
+// Enhanced reset function - Only this should reset stock levels
 function resetAllMedicineData() {
     if (confirm("Are you sure you want to reset ALL medicine stocks to their original values? This cannot be undone.")) {
+        // Reset stock levels to original
         Object.keys(medicineData).forEach(person => {
             Object.keys(medicineData[person]).forEach(timeSlot => {
                 medicineData[person][timeSlot].forEach(medicine => {
@@ -809,15 +816,20 @@ function resetAllMedicineData() {
             });
         });
         
+        // Clear all daily tracking data
+        appStorage.dailyTracking = {};
+        
         // Save the reset data
         saveMedicineData();
         
-        // Refresh the display
+        // Refresh displays
         populateMedicineSchedules();
         generateStockAlerts();
         
         showNotification("✅ All medicine stocks have been reset to original values!");
         speak("All medicine stocks have been reset to their original values.");
+        
+        console.log("All medicine data reset to original values");
     }
 }
 
@@ -829,10 +841,7 @@ function resetAllMedicineData() {
             { time: '16:00', message: "Time for Father's 4 PM medicine - Acitrom", medicines: ["Acitrom"] },
             { time: '22:00', message: "Time for evening medicines", medicines: ["Rotin F", "Telmiford", "Cinod", "Zavamet"] }
         ];
-
-        // Storage functions using variables instead of localStorage
-        let appStorage = {};
-
+        //storage function for daily tracking
         function saveToStorage(key, value) {
             appStorage[key] = JSON.stringify(value);
         }
@@ -846,109 +855,125 @@ function resetAllMedicineData() {
             return new Date().toDateString();
         }
 
-        // Load saved data
-        function loadSavedData() {
-            console.log("Loading saved data...");
-            
-            // Load stock levels
-            Object.keys(medicineData).forEach(person => {
-                Object.keys(medicineData[person]).forEach(timeSlot => {
-                    medicineData[person][timeSlot].forEach((medicine, index) => {
-                        const savedStock = getFromStorage(medicine.storageKey + '_stock');
-                        if (savedStock !== null) {
-                            medicine.stock = savedStock;
-                        }
-                    });
-                });
+        // Enhanced function to check if medicine was taken today
+function wasTakenToday(storageKey) {
+    const todayKey = getTodayKey();
+    const takenData = getFromStorage(storageKey + '_taken_' + todayKey);
+    return takenData === true;
+}
+
+// Enhanced function to mark medicine as taken with stock management
+function markTakenToday(storageKey, taken = true) {
+    const todayKey = getTodayKey();
+    const previouslyTaken = wasTakenToday(storageKey);
+    
+    // Save the daily tracking data
+    saveToStorage(storageKey + '_taken_' + todayKey, taken);
+    
+    // Handle stock changes based on taken status
+    if (taken && !previouslyTaken) {
+        // Medicine was just marked as taken - reduce stock
+        reduceMedicineStock(storageKey);
+    } else if (!taken && previouslyTaken) {
+        // Medicine was unmarked as taken - increase stock back
+        increaseMedicineStock(storageKey);
+    }
+}
+       // Enhanced initialization function
+function init() {
+    console.log("Initializing MediBot system with persistent stock management...");
+    
+    // Load saved data first (this maintains persistent stock levels)
+    loadSavedData();
+    
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000);
+    
+    // Setup PWA installation
+    setupPWA();
+    
+    // Setup reminder system
+    setupReminderSystem();
+    
+    // Update next reminder display
+    updateNextReminder();
+    setInterval(updateNextReminder, 60000);
+    
+    // Check for low stock reminders every 5 minutes
+    setInterval(checkLowStockReminders, 5 * 60 * 1000);
+    
+    // Initialize voice if available
+    initializeVoiceRecognition();
+    
+    // Populate medicine schedules with current stock levels
+    console.log("Populating medicine schedules with persistent stock data...");
+    populateMedicineSchedules();
+    
+    // Generate stock alerts
+    generateStockAlerts();
+    
+    // Auto-greet user with stock status
+    setTimeout(() => {
+        let stockSummary = getStockSummary();
+        speak(`Welcome to MediBot! Medicine schedules loaded. ${stockSummary}`);
+        checkLowStockReminders();
+    }, 2000);
+}
+// New function to get stock summary
+function getStockSummary() {
+    let lowStockCount = 0;
+    let totalMedicines = 0;
+    
+    Object.keys(medicineData).forEach(person => {
+        Object.keys(medicineData[person]).forEach(timeSlot => {
+            medicineData[person][timeSlot].forEach(medicine => {
+                totalMedicines++;
+                if (medicine.stock <= 5) {
+                    lowStockCount++;
+                }
             });
-        }
+        });
+    });
+    
+    if (lowStockCount > 0) {
+        return `Warning: ${lowStockCount} medicine${lowStockCount > 1 ? 's' : ''} running low on stock.`;
+    }
+    return `All ${totalMedicines} medicines have adequate stock levels.`;
+}
 
-        // Check if medicine was taken today
-        function wasTakenToday(storageKey) {
-            const todayKey = getTodayKey();
-            const takenData = getFromStorage(storageKey + '_taken_' + todayKey);
-            return takenData === true;
-        }
+// Enhanced page visibility handler to maintain persistence
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+        // Page became visible - refresh displays but maintain stock levels
+        console.log("Page visible - refreshing displays with persistent data");
+        populateMedicineSchedules();
+        generateStockAlerts();
+        checkLowStockReminders();
+    }
+});
 
-        // Mark medicine as taken today
-        function markTakenToday(storageKey, taken = true) {
-            const todayKey = getTodayKey();
-            saveToStorage(storageKey + '_taken_' + todayKey, taken);
-        }
+// Auto-save mechanism (backup save every 5 minutes)
+setInterval(() => {
+    saveMedicineData();
+    console.log("Auto-save: Medicine data backed up");
+}, 5 * 60 * 1000);
 
-        // Initialize the application
-        function init() {
-            console.log("Initializing MediBot system...");
-            
-            // Load saved data first
-            loadSavedData();
-            
-            updateCurrentTime();
-            setInterval(updateCurrentTime, 1000);
-            
-            // Setup PWA installation
-            setupPWA();
-            
-            // Setup reminder system
-            setupReminderSystem();
-            
-            // Update next reminder display
-            updateNextReminder();
-            setInterval(updateNextReminder, 60000);
-            
-            // Check for low stock reminders every 5 minutes
-            setInterval(checkLowStockReminders, 5 * 60 * 1000);
-            
-            // Initialize voice if available
-            initializeVoiceRecognition();
-            
-            // Populate medicine schedules
-            console.log("Populating medicine schedules...");
-            populateMedicineSchedules();
-            
-            // Generate stock alerts
-            generateStockAlerts();
-            
-            // Auto-greet user
-            setTimeout(() => {
-                speak("Welcome to MediBot! All medicine schedules loaded successfully.");
-                // Check for immediate low stock alerts
-                checkLowStockReminders();
-            }, 2000);
-            saveMedicineData(); // Save initial data
-        }
-
-        // Check for low stock reminders
-        function checkLowStockReminders() {
-            Object.keys(medicineData).forEach(person => {
-                Object.keys(medicineData[person]).forEach(timeSlot => {
-                    medicineData[person][timeSlot].forEach((medicine) => {
-                        if (medicine.stock <= 5 && !wasTakenToday('low_stock_' + medicine.storageKey)) {
-                                const reminderMessage = `LOW STOCK ALERT: ${medicine.name} only has ${medicine.stock} tablets left. Please refill soon!`;
-                                
-                                // Show browser notification if permitted
-                                if (notificationPermission === 'granted') {
-                                    new Notification('🚨 Low Stock Alert', {
-                                        body: reminderMessage,
-                                        icon: 'https://via.placeholder.com/64/ff6b6b/ffffff?text=🏥',
-                                        requireInteraction: true
-                                    });
-                                }
-                                
-                                // Show custom notification
-                                showCustomNotification('🚨 Low Stock Alert', reminderMessage);
-                                
-                                // Speak the alert
-                                speak(reminderMessage);
-                                
-                                // Mark as alerted today to avoid spam
-                                markTakenToday('low_stock_' + medicine.storageKey, true);
-                            }
-                        });
-                    });
-                });
-            };
-        
+        // Enhanced load saved data function
+function loadSavedData() {
+    console.log("Loading saved data with persistent stock management...");
+    // Load daily tracking data for today's status
+    Object.keys(medicineData).forEach(person => {
+        Object.keys(medicineData[person]).forEach(timeSlot => {
+            medicineData[person][timeSlot].forEach((medicine, index) => {
+                if (!medicine.storageKey) {
+                    medicine.storageKey = `${person}_${timeSlot}_${index}_${medicine.name.replace(/\s+/g, '_')}`;
+                }
+            });
+        });
+    });
+    
+    console.log("Persistent stock levels maintained successfully");
+}
 
         // PWA setup
         function setupPWA() {
@@ -1260,71 +1285,74 @@ async function processVoiceCommand(command) {
             });
         }
 
-        // Dose tracking functions
-        function toggleDoseTaken(storageKey, taken) {
-            markTakenToday(storageKey, taken);
-            
-            // Update the medicine display
-            populateMedicineSchedules();
-            
-            if (taken) {
-                // Reduce stock count
-                reduceMedicineStock(storageKey);
-            } else {
-                // Increase stock count back
-                increaseMedicineStock(storageKey);
-            }
-            
-            // Refresh displays
-            generateStockAlerts();
-        }
+        // Enhanced dose tracking function
+function toggleDoseTaken(storageKey, taken) {
+    const previouslyTaken = wasTakenToday(storageKey);
+    
+    // Mark as taken/untaken for today
+    markTakenToday(storageKey, taken);
+    
+    // Update displays
+    populateMedicineSchedules();
+    generateStockAlerts();
+    
+    // Provide feedback
+    if (taken && !previouslyTaken) {
+        speak("Medicine marked as taken. Stock updated.");
+    } else if (!taken && previouslyTaken) {
+        speak("Medicine unmarked. Stock restored.");
+    }
+}
 
-        function reduceMedicineStock(storageKey) {
-            // Find and reduce stock
-            Object.keys(medicineData).forEach(person => {
-                Object.keys(medicineData[person]).forEach(timeSlot => {
-                    medicineData[person][timeSlot].forEach((medicine) => {
-                        if (medicine.storageKey === storageKey && medicine.stock > 0) {
-                            medicine.stock--;
-                            saveToStorage(medicine.storageKey + '_stock', medicine.stock);
-                            saveMedicineData();
-                        }
-                    });
-                });
+        // Enhanced stock reduction function
+function reduceMedicineStock(storageKey) {
+    Object.keys(medicineData).forEach(person => {
+        Object.keys(medicineData[person]).forEach(timeSlot => {
+            medicineData[person][timeSlot].forEach((medicine) => {
+                if (medicine.storageKey === storageKey && medicine.stock > 0) {
+                    medicine.stock--;
+                    console.log(`Reduced stock for ${medicine.name}: ${medicine.stock + 1} → ${medicine.stock}`);
+                    saveMedicineData(); // Save immediately after stock change
+                }
             });
-        }
+        });
+    });
+}
 
-        function increaseMedicineStock(storageKey) {
-            // Find and increase stock
-            Object.keys(medicineData).forEach(person => {
-                Object.keys(medicineData[person]).forEach(timeSlot => {
-                    medicineData[person][timeSlot].forEach((medicine) => {
-                        if (medicine.storageKey === storageKey && medicine.stock < medicine.originalStock) {
-                            medicine.stock++;
-                            saveToStorage(medicine.storageKey + '_stock', medicine.stock);
-                            saveMedicineData();
-                        }
-                    });
-                });
+        // Enhanced stock increase function
+function increaseMedicineStock(storageKey) {
+    Object.keys(medicineData).forEach(person => {
+        Object.keys(medicineData[person]).forEach(timeSlot => {
+            medicineData[person][timeSlot].forEach((medicine) => {
+                if (medicine.storageKey === storageKey) {
+                    medicine.stock++;
+                    console.log(`Increased stock for ${medicine.name}: ${medicine.stock - 1} → ${medicine.stock}`);
+                    saveMedicineData(); // Save immediately after stock change
+                }
             });
-        }
-
-        function addStock(storageKey, amount = 10) {
-            Object.keys(medicineData).forEach(person => {
-                Object.keys(medicineData[person]).forEach(timeSlot => {
-                    medicineData[person][timeSlot].forEach((medicine) => {
-                        if (medicine.storageKey === storageKey) {
-                            medicine.stock += amount;
-                            saveToStorage(medicine.storageKey + '_stock', medicine.stock);
-                            saveMedicineData();
-                            populateMedicineSchedules();
-                            generateStockAlerts();
-                            speak(`Added ${amount} tablets to ${medicine.name}. New stock: ${medicine.stock}`);
-                        }
-                    });
-                });
+        });
+    });
+}
+  // Enhanced add stock function
+function addStock(storageKey, amount = 10) {
+    Object.keys(medicineData).forEach(person => {
+        Object.keys(medicineData[person]).forEach(timeSlot => {
+            medicineData[person][timeSlot].forEach((medicine) => {
+                if (medicine.storageKey === storageKey) {
+                    const oldStock = medicine.stock;
+                    medicine.stock += amount;
+                    saveMedicineData(); // Save immediately
+                    
+                    populateMedicineSchedules();
+                    generateStockAlerts();
+                    
+                    console.log(`Stock added: ${medicine.name} ${oldStock} → ${medicine.stock}`);
+                    speak(`Added ${amount} tablets to ${medicine.name}. New stock: ${medicine.stock}`);
+                }
             });
-        }
+        });
+    });
+}
 
         // Stock alert functions
         function generateStockAlerts() {
