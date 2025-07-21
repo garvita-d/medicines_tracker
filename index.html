@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medicine Reminder System</title>
+    <title>Medicines Tracking System</title>
     <meta name="theme-color" content="#4F46E5">
     <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiTWVkaWNpbmUgUmVtaW5kZXIgU3lzdGVtIiwic2hvcnRfbmFtZSI6Ik1lZFJlbWluZGVyIiwic3RhcnRfdXJsIjoiLyIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNGRkZGRkYiLCJ0aGVtZV9jb2xvciI6IiM0RjQ2RTUiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCM2FXUjBhRDBpTWpRaUlHaGxhV2QwZEQwaU1qUWlJSFpwWlhkQ2IzZzlJakFnTUNBeU5DQXlOQ0lnWm1sc2JEMGlJelEyTmpreVJTSStQR05wY21Oc1pTQmplRDBpTVRJaUlHTjVQU0l4TWlJZ2NqMGlOU0lnWm1sc2JEMGlJekZHUXpjelFTSXZQand2YzNablBnPT0iLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2Uvc3ZnK3htbCJ9XX0=">
     
@@ -474,7 +474,7 @@
         const STORAGE_KEY = 'medicine_tracker_data';
         const STORAGE_VERSION = '2.0';
         
-        // Check localStorage availability
+        // Checking localStorage availability
         let storageAvailable = false;
         
         function checkStorageAvailability() {
@@ -511,32 +511,32 @@
         const originalMedicineData = {
             father: {
                 morning: [
-                    { name: "Maxi PhD", dose: "30 tablets", timing: "Before breakfast", stock: 30, originalStock: 30, lastTaken: null }
+                    { name: "Maxi PhD", dose: "1 tablet at each timeslot", stock: 30, originalStock: 30, lastTaken: null }
                 ],
                 afterBreakfast: [
-                    { name: "Metolol MF", dose: "60mg", timing: "30 tablets", stock: 30, originalStock: 30, lastTaken: null },
-                    { name: "Pilclop", dose: "75mg", timing: "30 tablets", stock: 30, originalStock: 30, lastTaken: null },
-                    { name: "Cordarone", dose: "30 tablets", timing: "", stock: 30, originalStock: 30, lastTaken: null },
-                    { name: "Orofer XT", dose: "30 tablets", timing: "", stock: 30, originalStock: 30, lastTaken: null },
-                    { name: "Hyqvit", dose: "30 tablets", timing: "", stock: 30, originalStock: 30, lastTaken: null }
+                    { name: "Metolol MF 60mg", dose: "1 tablet at each timeslot", stock: 30, originalStock: 30, lastTaken: null },
+                    { name: "Pilclop 75mg", dose: "1 tablet at each timeslot",  stock: 30, originalStock: 30, lastTaken: null },
+                    { name: "Cordarone", dose: "1 tablet at each timeslot", stock: 30, originalStock: 30, lastTaken: null },
+                    { name: "Orofer XT", dose: "1 tablet at each timeslot", timing: "", stock: 30, originalStock: 30, lastTaken: null },
+                    { name: "Hyqvit", dose: "1 tablet at each timeslot", timing: "", stock: 30, originalStock: 30, lastTaken: null }
                 ],
                 afternoon: [
                     { name: "Acitrom", dose: "1mg/2mg alternate days", timing: "4pm", stock: 30, originalStock: 30, lastTaken: null }
                 ],
                 afterDinner: [
-                    { name: "Rotin F", dose: "30 tablets", timing: "", stock: 30, originalStock: 30, lastTaken: null },
-                    { name: "Telmiford", dose: "40mg", timing: "30 tablets", stock: 30, originalStock: 30, lastTaken: null }
+                    { name: "Rotin F", dose: "1 tablet at each timeslot", timing: "", stock: 30, originalStock: 30, lastTaken: null },
+                    { name: "Telmiford 40mg", dose: "1 tablet at each timeslot", timing: "", stock: 30, originalStock: 30, lastTaken: null }
                 ]
             },
             mother: {
                 afterBreakfast: [
-                    { name: "Telzox H", dose: "30 tablets", timing: "", stock: 30, originalStock: 30, lastTaken: null },
-                    { name: "Cinod", dose: "10mg", timing: "After breakfast and dinner", stock: 60, originalStock: 60, lastTaken: null },
-                    { name: "Zavamet", dose: "50/500", timing: "After breakfast and dinner", stock: 60, originalStock: 60, lastTaken: null }
+                    { name: "Telzox H", dose: "1 tablet at each timeslot", timing: "", stock: 30, originalStock: 30, lastTaken: null },
+                    { name: "Cinod 10mg", dose: "1 tablet at each timeslot", timing: "After breakfast and dinner", stock: 60, originalStock: 60, lastTaken: null },
+                    { name: "Zavamet 50/500", dose: "1 tablet at each timeslot", timing: "After breakfast and dinner", stock: 60, originalStock: 60, lastTaken: null }
                 ],
                 afterDinner: [
-                    { name: "Cinod", dose: "10mg", timing: "After breakfast and dinner", stock: 60, originalStock: 60, lastTaken: null },
-                    { name: "Zavamet", dose: "50/500", timing: "After breakfast and dinner", stock: 60, originalStock: 60, lastTaken: null }
+                    { name: "Cinod 10mg", dose: "1 tablet at each timeslot", timing: "After breakfast and dinner", stock: 60, originalStock: 60, lastTaken: null },
+                    { name: "Zavamet 50/500", dose: "1 tablet at each timeslot", timing: "After breakfast and dinner", stock: 60, originalStock: 60, lastTaken: null }
                 ]
             }
         };
@@ -544,7 +544,7 @@
         // Current medicine data (will be loaded from storage or default to original)
         let medicineData = {};
 
-        // Enhanced persistent storage functions
+        // Persistent storage functions
         function saveToStorage(data) {
             try {
                 if (!storageAvailable) {
@@ -641,7 +641,7 @@
                 if (!data || typeof data !== 'object') return false;
                 if (!data.father || !data.mother) return false;
                 
-                // Validate each person's data structure
+                // Validating data structure for both
                 for (const person of ['father', 'mother']) {
                     const personData = data[person];
                     if (!personData || typeof personData !== 'object') return false;
@@ -671,7 +671,7 @@
             if (savedData && validateMedicineData(savedData)) {
                 // Use saved data
                 medicineData = savedData;
-                showNotification('💾 Previous data loaded successfully!');
+                showNotification('Previous data loaded successfully!');
                 
                 // Count total medicines tracked
                 let totalMedicines = 0;
@@ -683,7 +683,7 @@
                 // Use original data for first time or if saved data is corrupted
                 medicineData = JSON.parse(JSON.stringify(originalMedicineData));
                 saveToStorage(medicineData);
-                showNotification('🎉 Welcome to AI-powered medicine tracking!');
+                showNotification('Welcome to AI-powered medicines tracking!');
                 console.log('Initialized with original data');
             }
         }
@@ -730,9 +730,7 @@
             initializeReminders();
             renderFatherMedicines();
             renderMotherMedicines();
-           
-
-            
+    
             // Show install prompt on mobile
             if (isMobile() && !isAppInstalled()) {
                 setTimeout(() => {
@@ -823,7 +821,7 @@
                                 ${takenToday ? '✅ Taken Today' : '💊 Take Medicine'}
                             </button>
                             <button class="btn btn-calendar" onclick="viewCalendar('father', '${medicine.name}')">
-                                📅 History
+                                📅 Add reminder to Calendar
                             </button>
                         </div>
                     `;
@@ -891,7 +889,7 @@
                                 ${takenToday ? '✅ Taken Today' : '💊 Take Medicine'}
                             </button>
                             <button class="btn btn-calendar" onclick="viewCalendar('mother', '${medicine.name}')">
-                                📅 History
+                                📅 Add reminder to Calendar
                             </button>
                         </div>
                     `;
@@ -944,13 +942,9 @@
             }, 2000);
         }
     }
-
-    // Replace the viewCalendar function with this new implementation:
 function viewCalendar(person, medicineName) {
     showCalendarModal(person, medicineName);
 }
-
-// Add these new functions for calendar functionality:
 function showCalendarModal(person, medicineName) {
     // Create modal HTML
     const modalHTML = `
@@ -1289,7 +1283,6 @@ function formatDate(dateString) {
     });
 }
 
-// Initialize reminders when app starts - add this to the initApp() function
 function initializeReminders() {
     // Request notification permission
     if ('Notification' in window && Notification.permission === 'default') {
