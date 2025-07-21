@@ -1026,47 +1026,157 @@
             document.getElementById('voiceStatus').textContent = message;
         }
 
-        function processVoiceCommand(command) {
-            const lowerCommand = command.toLowerCase();
-            let response = '';
+        / Enhanced Voice Command Processing with Health Knowledge
+function processVoiceCommand(command) {
+    const lowerCommand = command.toLowerCase();
+    let response = '';
 
-            if (lowerCommand.includes('medicine') || lowerCommand.includes('medication')) {
-                if (lowerCommand.includes('father')) {
-                    response = 'Father takes Maxi PhD before breakfast, then Metolol, Pilclop, Cordarone, Orofer and Hyqvit after breakfast. Acitrom at 4 PM, and Rotin F with Telmiford at night.';
-                } else if (lowerCommand.includes('mother')) {
-                    response = 'Mother takes Telzox H, Cinod and Zavamet after breakfast. Then Cinod and Zavamet again at night.';
-                } else {
-                    response = 'I can help with Father\'s or Mother\'s medicine schedule. Please specify who you\'re asking about.';
-                }
-            } else if (lowerCommand.includes('stock') || lowerCommand.includes('count')) {
-                response = 'Let me check the stock levels...';
-                // Generate stock summary
-                let lowStockItems = [];
-                Object.keys(medicineData).forEach(person => {
-                    Object.keys(medicineData[person]).forEach(timeSlot => {
-                        medicineData[person][timeSlot].forEach(medicine => {
-                            if (medicine.stock <= 5) {
-                                lowStockItems.push(`${medicine.name} has ${medicine.stock} left`);
-                            }
-                        });
-                    });
-                });
-                if (lowStockItems.length > 0) {
-                    response += ' Warning: ' + lowStockItems.join(', ');
-                } else {
-                    response += ' All medicines have adequate stock levels.';
-                }
-            } else if (lowerCommand.includes('time') || lowerCommand.includes('when')) {
-                response = 'Morning medicines at 8 AM and 10 AM, Acitrom at 4 PM, and evening medicines at 10 PM.';
-            } else if (lowerCommand.includes('taken') || lowerCommand.includes('done')) {
-                response = 'I understand you\'ve taken your medicine. Please use the checkboxes on the medicine cards to mark them as taken.';
-            } else {
-                response = 'I can help with medicine schedules, stock levels, and timing. Try asking "What medicine does father take?" or "Check stock levels".';
-            }
-
-            document.getElementById('voiceResponse').textContent = response;
-            speak(response);
+    // Medicine-specific queries (existing functionality enhanced)
+    if (lowerCommand.includes('medicine') || lowerCommand.includes('medication')) {
+        if (lowerCommand.includes('father')) {
+            response = 'Father takes Maxi PhD before breakfast at 8 AM, then Metolol MF, Pilclop, Cordarone, Orofer XT and Hyqvit after breakfast at 10 AM. Acitrom at 4 PM, and Rotin F with Telmiford at night around 10 PM.';
+        } else if (lowerCommand.includes('mother')) {
+            response = 'Mother takes Telzox H, Cinod and Zavamet after breakfast at 10 AM. Then Cinod and Zavamet again at night around 10 PM.';
+        } else if (lowerCommand.includes('schedule') || lowerCommand.includes('timing')) {
+            response = 'Daily medicine schedule: 8 AM - Father\'s Maxi PhD before breakfast. 10 AM - After breakfast medicines for both parents. 4 PM - Father\'s Acitrom. 10 PM - Evening medicines for both parents.';
+        } else {
+            response = 'I can help with Father\'s or Mother\'s medicine schedule. Father takes heart medications and supplements, while Mother takes blood pressure and diabetes medications. Which specific information do you need?';
         }
+    }
+    
+    // Stock and inventory queries
+    else if (lowerCommand.includes('stock') || lowerCommand.includes('count') || lowerCommand.includes('inventory')) {
+        response = 'Let me check the current stock levels...';
+        let lowStockItems = [];
+        let adequateStockItems = [];
+        
+        Object.keys(medicineData).forEach(person => {
+            Object.keys(medicineData[person]).forEach(timeSlot => {
+                medicineData[person][timeSlot].forEach(medicine => {
+                    if (medicine.stock <= 5) {
+                        lowStockItems.push(`${medicine.name} has only ${medicine.stock} tablets left`);
+                    } else if (medicine.stock <= 10) {
+                        adequateStockItems.push(`${medicine.name} has ${medicine.stock} tablets`);
+                    }
+                });
+            });
+        });
+        
+        if (lowStockItems.length > 0) {
+            response += ` URGENT: ${lowStockItems.join(', ')}. Please refill these medicines soon.`;
+        }
+        if (adequateStockItems.length > 0) {
+            response += ` Moderate stock: ${adequateStockItems.join(', ')}.`;
+        }
+        if (lowStockItems.length === 0 && adequateStockItems.length === 0) {
+            response += ' All medicines have adequate stock levels above 10 tablets.';
+        }
+    }
+    
+    // Time and scheduling queries
+    else if (lowerCommand.includes('time') || lowerCommand.includes('when') || lowerCommand.includes('schedule')) {
+        if (lowerCommand.includes('next') || lowerCommand.includes('upcoming')) {
+            const now = new Date();
+            const currentTime = now.getHours() * 100 + now.getMinutes();
+            const nextReminder = reminderTimes.find(r => {
+                const [hours, minutes] = r.time.split(':').map(Number);
+                return (hours * 100 + minutes) > currentTime;
+            });
+            
+            if (nextReminder) {
+                response = `Next medicine reminder is at ${nextReminder.time}. ${nextReminder.message}`;
+            } else {
+                response = 'Next medicine reminder is tomorrow at 8:00 AM for Father\'s morning medicine.';
+            }
+        } else {
+            response = 'Daily medicine times: 8:00 AM - Father\'s before breakfast medicine, 10:00 AM - After breakfast medicines, 4:00 PM - Father\'s Acitrom, 10:00 PM - Evening medicines for both parents.';
+        }
+    }
+    
+    // Medicine taken/completion status
+    else if (lowerCommand.includes('taken') || lowerCommand.includes('done') || lowerCommand.includes('completed')) {
+        response = 'I understand you want to mark medicine as taken. Please use the checkboxes next to each medicine on the dashboard to mark them as completed. This will automatically update the stock count and track your daily progress.';
+    }
+    
+    // Health and medical information queries
+    else if (lowerCommand.includes('blood pressure') || lowerCommand.includes('hypertension')) {
+        response = 'Blood pressure medications like Telzox H and Telmiford help control hypertension. Take them consistently at the same time daily. Monitor your blood pressure regularly, maintain a low-sodium diet, exercise regularly, and avoid stress. Normal blood pressure is below 120/80 mmHg.';
+    }
+    
+    else if (lowerCommand.includes('diabetes') || lowerCommand.includes('blood sugar')) {
+        response = 'Diabetes medications like Zavamet and Cinod help control blood sugar levels. Take them with meals as prescribed. Monitor blood glucose regularly, follow a balanced diet, exercise daily, stay hydrated, and watch for symptoms like excessive thirst, frequent urination, or fatigue.';
+    }
+    
+    else if (lowerCommand.includes('heart') || lowerCommand.includes('cardiac')) {
+        response = 'Heart medications include Metolol MF for blood pressure, Cordarone for heart rhythm, and Pilclop as a blood thinner. Take them exactly as prescribed. Maintain a heart-healthy diet low in saturated fats, exercise regularly, avoid smoking, limit alcohol, and manage stress.';
+    }
+    
+    else if (lowerCommand.includes('side effect') || lowerCommand.includes('adverse')) {
+        response = 'Common medication side effects may include dizziness, nausea, or fatigue. If you experience unusual symptoms, consult your doctor immediately. Never stop medications suddenly without medical advice. Keep a list of all medicines and inform healthcare providers about any allergies or reactions.';
+    }
+    
+    else if (lowerCommand.includes('dose') || lowerCommand.includes('dosage')) {
+        response = 'Always take medications exactly as prescribed by your doctor. Never increase or decrease doses without medical supervision. If you miss a dose, take it as soon as you remember unless it\'s close to the next scheduled dose. Set reminders to maintain consistency.';
+    }
+    
+    else if (lowerCommand.includes('food') || lowerCommand.includes('meal')) {
+        response = 'Some medicines should be taken with food to reduce stomach irritation, while others work better on an empty stomach. Your current schedule includes medicines after breakfast and dinner. Always follow specific food instructions provided by your pharmacist or doctor.';
+    }
+    
+    else if (lowerCommand.includes('emergency') || lowerCommand.includes('urgent')) {
+        response = 'In medical emergencies, call emergency services immediately. For medication-related emergencies like allergic reactions, severe side effects, or accidental overdose, seek immediate medical attention. Keep emergency contacts handy and inform medical staff about all current medications.';
+    }
+    
+    else if (lowerCommand.includes('doctor') || lowerCommand.includes('appointment')) {
+        response = 'Regular doctor visits are important for medication management. Bring your medicine list, discuss any concerns or side effects, ask about generic alternatives, and ensure prescriptions are up to date. Schedule follow-ups as recommended and never hesitate to ask questions.';
+    }
+    
+    else if (lowerCommand.includes('reminder') || lowerCommand.includes('notification')) {
+        response = 'Medicine reminders are set for 8 AM, 10 AM, 4 PM, and 10 PM daily. You can enable browser notifications, install this as a mobile app, or download calendar events. Consistent timing helps maintain medication effectiveness and builds healthy habits.';
+    }
+    
+    else if (lowerCommand.includes('storage') || lowerCommand.includes('store')) {
+        response = 'Store medicines in a cool, dry place away from direct sunlight and moisture. Keep them in original containers with labels. Some may require refrigeration. Check expiration dates regularly and dispose of expired medicines safely at pharmacy take-back programs.';
+    }
+    
+    else if (lowerCommand.includes('travel') || lowerCommand.includes('vacation')) {
+        response = 'When traveling, bring extra medication in carry-on luggage, keep medicines in original containers, carry prescriptions or doctor\'s notes, research medicine availability at your destination, and adjust timing for different time zones gradually.';
+    }
+    
+    else if (lowerCommand.includes('cost') || lowerCommand.includes('price') || lowerCommand.includes('expensive')) {
+        response = 'To reduce medication costs, ask about generic alternatives, use pharmacy discount programs, compare prices at different pharmacies, look for manufacturer coupons, consider 90-day supplies for better pricing, and discuss financial concerns with your doctor.';
+    }
+    
+    // General health and wellness
+    else if (lowerCommand.includes('diet') || lowerCommand.includes('nutrition')) {
+        response = 'A healthy diet supports medication effectiveness. Focus on fruits, vegetables, whole grains, lean proteins, and healthy fats. Limit processed foods, excess sodium, and added sugars. Stay hydrated, eat regular meals, and consider how foods interact with your medications.';
+    }
+    
+    else if (lowerCommand.includes('exercise') || lowerCommand.includes('physical activity')) {
+        response = 'Regular exercise improves medication effectiveness, especially for heart and diabetes medicines. Start with light activities like walking, gradually increase intensity, aim for 150 minutes weekly, check with your doctor before starting new routines, and monitor how exercise affects your condition.';
+    }
+    
+    else if (lowerCommand.includes('sleep') || lowerCommand.includes('rest')) {
+        response = 'Quality sleep is crucial for medication effectiveness and overall health. Aim for 7-9 hours nightly, maintain consistent sleep schedules, create a relaxing bedtime routine, avoid screens before bed, and discuss sleep issues with your healthcare provider.';
+    }
+    
+    // Help and general queries
+    else if (lowerCommand.includes('help') || lowerCommand.includes('what can you do')) {
+        response = 'I\'m MediBot, your health assistant! I can help with medicine schedules, stock levels, health information about blood pressure, diabetes, heart conditions, medication side effects, proper dosing, storage tips, and general wellness advice. Ask me about specific medicines, health conditions, or general health topics!';
+    }
+    
+    else if (lowerCommand.includes('thank') || lowerCommand.includes('thanks')) {
+        response = 'You\'re very welcome! I\'m here to help with all your health and medicine questions. Stay consistent with your medications and don\'t hesitate to ask if you need any assistance. Your health is important!';
+    }
+    
+    // Default response for unrecognized commands
+    else {
+        response = 'I\'m your health assistant and can help with various topics including: medicine schedules and stock levels, blood pressure and heart health, diabetes management, medication side effects and dosing, proper medicine storage, health and nutrition advice, exercise recommendations, and general wellness tips. What would you like to know about?';
+    }
+
+    document.getElementById('voiceResponse').textContent = response;
+    speak(response);
+}
 
         function speak(text) {
             if (speechSynthesis && speechSynthesis.speaking) {
@@ -1338,32 +1448,68 @@
         }
 
         function downloadCalendar() {
-            let icsContent = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//MediBot//Medicine Reminders//EN\n';
-            
-            reminderTimes.forEach((reminder, index) => {
-                const [hours, minutes] = reminder.time.split(':');
-                const now = new Date();
-                const eventDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
-                
-                icsContent += `BEGIN:VEVENT\n`;
-                icsContent += `UID:medireminder-${index}@medibot.app\n`;
-                icsContent += `DTSTART:${eventDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z\n`;
-                icsContent += `SUMMARY:${reminder.message}\n`;
-                icsContent += `DESCRIPTION:Medicine Reminder - ${reminder.medicines.join(', ')}\n`;
-                icsContent += `RRULE:FREQ=DAILY\n`;
-                icsContent += `END:VEVENT\n`;
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+            // Helper function to format date for ICS
+            function formatDateForICS(date) {
+                return date.getFullYear() + 
+                    String(date.getMonth() + 1).padStart(2, '0') + 
+                    String(date.getDate()).padStart(2, '0') + 'T' +
+                    String(date.getHours()).padStart(2, '0') + 
+                    String(date.getMinutes()).padStart(2, '0') + 
+                    String(date.getSeconds()).padStart(2, '0');
+        }
+    
+        let icsContent = 'BEGIN:VCALENDAR\r\n';
+        icsContent += 'VERSION:2.0\r\n';
+        icsContent += 'PRODID:-//MediBot//Medicine Reminders//EN\r\n';
+        icsContent += 'CALSCALE:GREGORIAN\r\n';
+    
+        reminderTimes.forEach((reminder, index) => {
+            const [hours, minutes] = reminder.time.split(':').map(Number);
+            const eventDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes);
+        
+            icsContent += 'BEGIN:VEVENT\r\n';
+            icsContent += `UID:medireminder-${index}-${Date.now()}@medibot.app\r\n`;
+            icsContent += `DTSTART:${formatDateForICS(eventDate)}\r\n`;
+            icsContent += `DTEND:${formatDateForICS(new Date(eventDate.getTime() + 15 * 60000))}\r\n`; // 15 min duration
+            icsContent += `SUMMARY:💊 ${reminder.message}\r\n`;
+            icsContent += `DESCRIPTION:Medicine Reminder\\n\\nMedicines: ${reminder.medicines.join(', ')}\\n\\nGenerated by MediBot Voice Assistant\r\n`;
+            icsContent += `RRULE:FREQ=DAILY\r\n`;
+            icsContent += `CATEGORIES:Health,Medicine,Reminder\r\n`;
+            icsContent += `PRIORITY:1\r\n`;
+            icsContent += `STATUS:CONFIRMED\r\n`;
+            icsContent += `TRANSP:OPAQUE\r\n`;
+            icsContent += 'END:VEVENT\r\n';
+        });
+    
+        icsContent += 'END:VCALENDAR\r\n';
+    
+        try {
+            const blob = new Blob([icsContent], { 
+                type: 'text/calendar;charset=utf-8' 
             });
-            
-            icsContent += 'END:VCALENDAR';
-            
-            const blob = new Blob([icsContent], { type: 'text/calendar' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = 'medicine-reminders.ics';
+            a.style.display = 'none';
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
             URL.revokeObjectURL(url);
+        
+            // Show success message
+            showCustomNotification('✅ Calendar Export Successful', 'Medicine reminders have been downloaded! Import the .ics file to your calendar app.');
+            speak('Calendar file downloaded successfully. Import it to your calendar app to get daily reminders.');
+        
+        } catch (error) {
+            console.error('Calendar download failed:', error);
+            showCustomNotification('❌ Calendar Export Failed', 'Unable to download calendar file. Please try again.');
+            speak('Sorry, calendar download failed. Please try again.');
         }
+    }
 
         function setupEmailReminders() {
             const subject = 'Medicine Reminder Schedule';
