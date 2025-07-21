@@ -544,7 +544,7 @@
                 // Use original data for first time
                 medicineData = JSON.parse(JSON.stringify(originalMedicineData));
                 saveToStorage(medicineData);
-                showNotification('Welcome! New medicine tracker initialized.');
+                showNotification('Welcome for medicine tracking.');
             }
         }
 
@@ -690,7 +690,7 @@
                     <button class="btn btn-take" 
                             onclick="takeMedicine('${person}', '${slot}', ${index})"
                             ${medicine.stock <= 0 ? 'disabled' : ''}>
-                        ${medicine.stock <= 0 ? '❌ Out of Stock' : (takenToday ? 'Taken Today' : 'Take Medicine')}
+                        ${medicine.stock <= 0 ? 'Out of Stock' : (takenToday ? 'Taken Today' : 'Take Medicine')}
                     </button>
                     <button class="btn btn-calendar" onclick="addToCalendar('${medicine.name}', '${slot}')">
                         Add to Calendar
