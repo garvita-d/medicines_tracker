@@ -1081,11 +1081,14 @@ function setReminder(person, medicineName) {
     loadExistingReminders(person, medicineName);
 }
 
-
-// Replace the addToCalendar function with this simplified version
+// MAIN CALENDAR FUNCTION - Entry point
 function addToCalendar(reminder) {
     try {
-        // Determine the best method for this device/browser
+        // Add unique ID if not present
+        if (!reminder.id) {
+            reminder.id = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        }
+        
         if (isMobileDevice()) {
             showMobileCalendarFlow(reminder);
         } else {
@@ -1093,16 +1096,17 @@ function addToCalendar(reminder) {
         }
     } catch (error) {
         console.error('Error adding to calendar:', error);
-        // Fallback to simple ICS download
-        createICSFile(reminder);
+        showNotification('❌ Calendar error. Please try again.', 'error');
+        createICSFile(reminder); // Fallback
     }
 }
+
 function isMobileDevice() {
     return /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
            window.matchMedia('(max-width: 768px)').matches;
 }
 
-// Simplified mobile calendar flow
+// MOBILE CALENDAR FLOW
 function showMobileCalendarFlow(reminder) {
     const modal = document.createElement('div');
     modal.style.cssText = `
@@ -1119,9 +1123,14 @@ function showMobileCalendarFlow(reminder) {
             <p style="color: #6b7280; margin-bottom: 25px;">${reminder.medicineName}<br>${formatDate(reminder.date)} at ${reminder.time}</p>
             
             <div style="display: flex; flex-direction: column; gap: 15px;">
-                <button onclick="createMobileICS(${JSON.stringify(reminder).replace(/"/g, '&quot;')})" 
+                <button onclick="openGoogleCalendarDirect(${JSON.stringify(reminder).replace(/"/g, '&quot;')})" 
+                        style="background: linear-gradient(45deg, #4285f4, #34a853); color: white; border: none; padding: 18px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 16px;">
+                    🌐 Google Calendar (Quick)
+                </button>
+                
+                <button onclick="createImprovedICS(${JSON.stringify(reminder).replace(/"/g, '&quot;')})" 
                         style="background: linear-gradient(45deg, #10b981, #059669); color: white; border: none; padding: 18px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 16px;">
-                    📱 Add to Phone Calendar
+                    📱 Download Calendar File
                 </button>
                 
                 <button onclick="copyReminderText(${JSON.stringify(reminder).replace(/"/g, '&quot;')})" 
@@ -1134,15 +1143,6 @@ function showMobileCalendarFlow(reminder) {
                     Cancel
                 </button>
             </div>
-            
-            <div style="background: #f0f9ff; border-radius: 10px; padding: 15px; margin-top: 20px; text-align: left;">
-                <p style="color: #1e40af; font-size: 14px; margin: 0; line-height: 1.5;">
-                    <strong>📱 How it works:</strong><br>
-                    1. Tap "Add to Phone Calendar"<br>
-                    2. Choose your calendar app when prompted<br>
-                    3. Confirm to save the reminder
-                </p>
-            </div>
         </div>
     `;
     
@@ -1150,312 +1150,8 @@ function showMobileCalendarFlow(reminder) {
     window.currentModal = modal;
 }
 
-// FIXED: Improved ICS file creation with better Google Calendar compatibility
-function createMobileICS(reminder) {
-    const startDate = new Date(`${reminder.date}T${reminder.time}`);
-    const endDate = new Date(startDate.getTime() + 30 * 60000); // 30 minutes duration
-    
-    // FIXED: Proper ICS date formatting (must be in UTC)
-    const formatICSDate = (date) => {
-        const utcYear = date.getUTCFullYear();
-        const utcMonth = String(date.getUTCMonth() + 1).padStart(2, '0');
-        const utcDay = String(date.getUTCDate()).padStart(2, '0');
-        const utcHours = String(date.getUTCHours()).padStart(2, '0');
-        const utcMinutes = String(date.getUTCMinutes()).padStart(2, '0');
-        const utcSeconds = String(date.getUTCSeconds()).padStart(2, '0');
-        return `${utcYear}${utcMonth}${utcDay}T${utcHours}${utcMinutes}${utcSeconds}Z`;
-    };
-    
-    // FIXED: Better text cleaning for ICS format
-    const cleanText = (text) => {
-        return text
-            .replace(/\\/g, '\\\\')  // Escape backslashes first
-            .replace(/;/g, '\\;')    // Escape semicolons
-            .replace(/,/g, '\\,')    // Escape commas
-            .replace(/\n/g, '\\n')   // Escape newlines
-            .replace(/\r/g, '')      // Remove carriage returns
-            .trim();
-    };
-    
-    // FIXED: Simpler, cleaner event details
-    const title = cleanText(`Medicine: ${reminder.medicineName}`);
-    const description = cleanText(`Time to take ${reminder.medicineName}${reminder.message ? '. Note: ' + reminder.message : ''}`);
-    
-    // FIXED: Generate proper unique UID
-    const uid = `medicine-${reminder.id || Date.now()}-${Math.random().toString(36).substr(2, 9)}@medicinetracker.app`;
-    
-    // FIXED: Improved ICS content with proper line breaks and structure
-    const icsLines = [
-        'BEGIN:VCALENDAR',
-        'VERSION:2.0',
-        'PRODID:-//Medicine Tracker//Medicine Reminder//EN',
-        'CALSCALE:GREGORIAN',
-        'METHOD:PUBLISH',
-        'BEGIN:VEVENT',
-        `UID:${uid}`,
-        `DTSTART:${formatICSDate(startDate)}`,
-        `DTEND:${formatICSDate(endDate)}`,
-        `DTSTAMP:${formatICSDate(new Date())}`,
-        `SUMMARY:💊 ${title}`,
-        `DESCRIPTION:${description}`,
-        'CATEGORIES:Medicine,Health,Reminder',
-        'STATUS:CONFIRMED',
-        'TRANSP:OPAQUE',
-        'PRIORITY:5',
-        // FIXED: Simplified alarm - just one main alarm
-        'BEGIN:VALARM',
-        'TRIGGER:-PT0M',
-        'ACTION:DISPLAY',
-        `DESCRIPTION:Time to take ${cleanText(reminder.medicineName)}!`,
-        'END:VALARM',
-        'END:VEVENT',
-        'END:VCALENDAR'
-    ];
-    
-    // FIXED: Join with proper CRLF line endings as per ICS standard
-    const icsContent = icsLines.join('\r\n');
-    
-    // FIXED: Better MIME type and file handling
-    const blob = new Blob([icsContent], { 
-        type: 'text/calendar;charset=utf-8' 
-    });
-    
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    
-    // FIXED: Better filename generation
-    const safeMedicineName = reminder.medicineName.replace(/[^a-zA-Z0-9]/g, '-');
-    const safeDate = reminder.date.replace(/[^0-9]/g, '');
-    link.download = `medicine-reminder-${safeMedicineName}-${safeDate}.ics`;
-    
-    // FIXED: Better download handling
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    
-    try {
-        link.click();
-        showNotification('📅 Calendar file downloaded successfully!', 'success');
-        setTimeout(() => {
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        }, 100);
-    } catch (error) {
-        console.error('Download error:', error);
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        showNotification('❌ Download failed. Please try again.', 'error');
-        return;
-    }
-    
-    // Show success message with better instructions
-    showImprovedCalendarInstructions();
-    closeMobileModal();
-}
-
-// FIXED: Better instructions modal
-function showImprovedCalendarInstructions() {
-    const instructionModal = document.createElement('div');
-    instructionModal.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-        background: rgba(0,0,0,0.9); z-index: 5001; 
-        display: flex; align-items: center; justify-content: center;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    `;
-    
-    instructionModal.innerHTML = `
-        <div style="background: white; border-radius: 20px; padding: 25px; max-width: 90%; max-width: 450px; text-align: center;">
-            <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
-            <h3 style="color: #059669; margin-bottom: 15px;">Calendar File Ready!</h3>
-            
-            <div style="background: #f0fdf4; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: left;">
-                <h4 style="color: #16a34a; margin: 0 0 12px 0; font-size: 16px;">📱 On Mobile:</h4>
-                <ol style="color: #166534; line-height: 1.6; margin: 0; padding-left: 18px; font-size: 14px;">
-                    <li>Check your Downloads folder or notification</li>
-                    <li>Tap the downloaded .ics file</li>
-                    <li>Choose "Add to Calendar" or your calendar app</li>
-                    <li>Confirm to save the reminder</li>
-                </ol>
-            </div>
-            
-            <div style="background: #eff6ff; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: left;">
-                <h4 style="color: #1d4ed8; margin: 0 0 12px 0; font-size: 16px;">🖥️ On Desktop:</h4>
-                <ol style="color: #1e40af; line-height: 1.6; margin: 0; padding-left: 18px; font-size: 14px;">
-                    <li>Double-click the downloaded file</li>
-                    <li>It will open in your default calendar app</li>
-                    <li>Click "Add" or "Import" to save</li>
-                </ol>
-            </div>
-            
-            <div style="background: #fef3c7; border-radius: 10px; padding: 15px; margin-bottom: 20px;">
-                <p style="color: #92400e; margin: 0; font-size: 13px; line-height: 1.4;">
-                    <strong>💡 Still having trouble?</strong><br>
-                    Open your calendar app first, then look for "Import", "Add Calendar", or "+" button and select the downloaded file.
-                </p>
-            </div>
-            
-            <button onclick="closeInstructionModal()" 
-                    style="background: #059669; color: white; border: none; padding: 15px 30px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 16px;">
-                Got it!
-            </button>
-        </div>
-    `;
-    
-    document.body.appendChild(instructionModal);
-    window.instructionModal = instructionModal;
-    
-    // Auto-close after 15 seconds
-    setTimeout(() => {
-        if (window.instructionModal) {
-            closeInstructionModal();
-        }
-    }, 15000);
-}
-
-// FIXED: Completely rewritten Google Calendar URL function
-function createGoogleCalendarUrl(reminder) {
-    const startDate = new Date(`${reminder.date}T${reminder.time}`);
-    const endDate = new Date(startDate.getTime() + 30 * 60000); // 30 minutes
-    
-    // FIXED: Google Calendar expects local time in YYYYMMDDTHHMMSS format
-    const formatGoogleDate = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = '00';
-        return `${year}${month}${day}T${hours}${minutes}${seconds}`;
-    };
-    
-    // FIXED: Better parameter encoding
-    const params = new URLSearchParams({
-        action: 'TEMPLATE',
-        text: `💊 Medicine: ${reminder.medicineName}`,
-        dates: `${formatGoogleDate(startDate)}/${formatGoogleDate(endDate)}`,
-        details: `Time to take ${reminder.medicineName}${reminder.message ? '\n\nNote: ' + reminder.message : ''}`,
-        location: '',
-        trp: 'false',
-        sprop: 'name:Medicine Tracker'
-    });
-    
-    return `https://calendar.google.com/calendar/render?${params.toString()}`;
-}
-
-// FIXED: Better Google Calendar opening with fallbacks
-function openGoogleCalendar(url) {
-    try {
-        // Method 1: Try opening in new tab
-        const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
-        
-        if (newWindow && !newWindow.closed) {
-            showNotification('✅ Opening Google Calendar...', 'success');
-            closeMobileModal();
-            return;
-        }
-        
-        // Method 2: Fallback for popup blockers
-        showNotification('🔄 Redirecting to Google Calendar...', 'info');
-        setTimeout(() => {
-            try {
-                window.location.href = url;
-            } catch (e) {
-                // Method 3: Last resort - show the URL
-                showGoogleCalendarFallback(url);
-            }
-        }, 1500);
-        
-    } catch (error) {
-        console.error('Error opening Google Calendar:', error);
-        showGoogleCalendarFallback(url);
-    }
-}
-
-// FIXED: Fallback method for Google Calendar
-function showGoogleCalendarFallback(url) {
-    closeMobileModal();
-    
-    const fallbackModal = document.createElement('div');
-    fallbackModal.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-        background: rgba(0,0,0,0.9); z-index: 5001; 
-        display: flex; align-items: center; justify-content: center;
-    `;
-    
-    fallbackModal.innerHTML = `
-        <div style="background: white; border-radius: 15px; padding: 30px; max-width: 90%; text-align: center;">
-            <h3 style="color: #dc2626; margin-bottom: 15px;">🔗 Manual Link</h3>
-            <p style="margin-bottom: 20px;">Please click the link below to add to Google Calendar:</p>
-            <a href="${url}" target="_blank" rel="noopener noreferrer" 
-               style="display: inline-block; background: #4285f4; color: white; padding: 15px 25px; border-radius: 10px; text-decoration: none; font-weight: 600; margin-bottom: 20px;">
-                🌐 Open Google Calendar
-            </a>
-            <br>
-            <button onclick="closeFallbackModal()" 
-                    style="background: #6b7280; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer;">
-                Close
-            </button>
-        </div>
-    `;
-    
-    document.body.appendChild(fallbackModal);
-    window.fallbackModal = fallbackModal;
-}
-
-function closeFallbackModal() {
-    if (window.fallbackModal) {
-        window.fallbackModal.remove();
-        window.fallbackModal = null;
-    }
-}
-// Copy reminder details as plain text
-function copyReminderText(reminder) {
-    const details = `Medicine Reminder: ${reminder.medicineName}
-Date: ${formatDate(reminder.date)}
-Time: ${reminder.time}
-${reminder.message ? 'Note: ' + reminder.message : ''}
-${reminder.repeat !== 'once' ? 'Repeat: ' + reminder.repeat : ''}
-
-Set this reminder in your calendar app!`;
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(details).then(() => {
-            showNotification('📋 Details copied! Paste into your calendar app.', 'success');
-            closeMobileModal();
-        }).catch(() => {
-            fallbackCopyText(details);
-        });
-    } else {
-        fallbackCopyText(details);
-    }
-}
-
-// Fallback copy method
-function fallbackCopyText(text) {
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    textArea.style.position = 'fixed';
-    textArea.style.left = '-999999px';
-    textArea.style.top = '-999999px';
-    document.body.appendChild(textArea);
-    textArea.select();
-    
-    try {
-        document.execCommand('copy');
-        showNotification('📋 Details copied to clipboard!', 'success');
-        closeMobileModal();
-    } catch (err) {
-        console.error('Copy failed:', err);
-        showNotification('❌ Could not copy. Please copy manually.', 'error');
-    }
-    
-    document.body.removeChild(textArea);
-}
-
+// DESKTOP CALENDAR FLOW
 function showDesktopCalendarFlow(reminder) {
-    const googleUrl = createGoogleCalendarUrl(reminder);
-    const outlookUrl = createOutlookCalendarUrl(reminder);
-    
     const modal = document.createElement('div');
     modal.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
@@ -1469,17 +1165,17 @@ function showDesktopCalendarFlow(reminder) {
             <p style="margin-bottom: 25px; color: #6b7280;">${reminder.medicineName} • ${formatDate(reminder.date)} at ${reminder.time}</p>
             
             <div style="display: grid; gap: 15px; margin-bottom: 20px;">
-                <button onclick="openGoogleCalendar('${googleUrl}')" 
+                <button onclick="openGoogleCalendarDirect(${JSON.stringify(reminder).replace(/"/g, '&quot;')})" 
                         style="background: linear-gradient(45deg, #4285f4, #34a853); color: white; border: none; padding: 15px 20px; border-radius: 10px; cursor: pointer; font-weight: 600;">
                     🌐 Google Calendar
                 </button>
                 
-                <button onclick="window.open('${outlookUrl}', '_blank')" 
+                <button onclick="openOutlookCalendar(${JSON.stringify(reminder).replace(/"/g, '&quot;')})" 
                         style="background: linear-gradient(45deg, #0078d4, #106ebe); color: white; border: none; padding: 15px 20px; border-radius: 10px; cursor: pointer; font-weight: 600;">
                     📧 Outlook Calendar
                 </button>
                 
-                <button onclick="createMobileICS(${JSON.stringify(reminder).replace(/"/g, '&quot;')})" 
+                <button onclick="createImprovedICS(${JSON.stringify(reminder).replace(/"/g, '&quot;')})" 
                         style="background: linear-gradient(45deg, #10b981, #059669); color: white; border: none; padding: 15px 20px; border-radius: 10px; cursor: pointer; font-weight: 600;">
                     📁 Download .ics File
                 </button>
@@ -1496,25 +1192,319 @@ function showDesktopCalendarFlow(reminder) {
     window.currentModal = modal;
 }
 
-// Create Outlook Calendar URL
-function createOutlookCalendarUrl(reminder) {
-    const startDate = new Date(`${reminder.date}T${reminder.time}`);
-    const endDate = new Date(startDate.getTime() + 30 * 60000);
-    
-    const params = new URLSearchParams({
-        path: '/calendar/action/compose',
-        rru: 'addevent',
-        subject: `💊 Medicine: ${reminder.medicineName}`,
-        startdt: startDate.toISOString(),
-        enddt: endDate.toISOString(),
-        body: `Time to take ${reminder.medicineName}${reminder.message ? '\n\nNote: ' + reminder.message : ''}`,
-        location: 'Home'
-    });
-    
-    return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`;
+// FIXED GOOGLE CALENDAR DIRECT LINK
+function openGoogleCalendarDirect(reminder) {
+    try {
+        const startDate = new Date(`${reminder.date}T${reminder.time}`);
+        const endDate = new Date(startDate.getTime() + 30 * 60000); // 30 minutes
+        
+        // FIXED: Google Calendar URL format - use proper encoding
+        const formatGoogleDate = (date) => {
+            // Google Calendar expects YYYYMMDDTHHMMSSZ format in UTC
+            const utcDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+            const year = utcDate.getUTCFullYear();
+            const month = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(utcDate.getUTCDate()).padStart(2, '0');
+            const hours = String(utcDate.getUTCHours()).padStart(2, '0');
+            const minutes = String(utcDate.getUTCMinutes()).padStart(2, '0');
+            const seconds = '00';
+            return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+        };
+        
+        // Create the URL with proper parameters
+        const baseUrl = 'https://calendar.google.com/calendar/render';
+        const params = new URLSearchParams({
+            action: 'TEMPLATE',
+            text: `💊 Medicine: ${reminder.medicineName}`,
+            dates: `${formatGoogleDate(startDate)}/${formatGoogleDate(endDate)}`,
+            details: `Time to take ${reminder.medicineName}${reminder.message ? '\n\nNote: ' + reminder.message : ''}`,
+            location: '',
+            trp: 'false'
+        });
+        
+        const googleUrl = `${baseUrl}?${params.toString()}`;
+        
+        // Try to open the URL
+        const newWindow = window.open(googleUrl, '_blank', 'noopener,noreferrer,width=800,height=600');
+        
+        if (newWindow && !newWindow.closed) {
+            showNotification('✅ Opening Google Calendar...', 'success');
+            closeMobileModal();
+        } else {
+            // Fallback if popup blocked
+            showGoogleCalendarFallback(googleUrl);
+        }
+        
+    } catch (error) {
+        console.error('Error opening Google Calendar:', error);
+        showNotification('❌ Could not open Google Calendar. Trying ICS download...', 'error');
+        createImprovedICS(reminder);
+    }
 }
 
-// Close modal functions
+// FIXED OUTLOOK CALENDAR
+function openOutlookCalendar(reminder) {
+    try {
+        const startDate = new Date(`${reminder.date}T${reminder.time}`);
+        const endDate = new Date(startDate.getTime() + 30 * 60000);
+        
+        const params = new URLSearchParams({
+            path: '/calendar/action/compose',
+            rru: 'addevent',
+            subject: `💊 Medicine: ${reminder.medicineName}`,
+            startdt: startDate.toISOString(),
+            enddt: endDate.toISOString(),
+            body: `Time to take ${reminder.medicineName}${reminder.message ? '\n\nNote: ' + reminder.message : ''}`,
+            location: ''
+        });
+        
+        const outlookUrl = `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`;
+        window.open(outlookUrl, '_blank', 'noopener,noreferrer');
+        showNotification('✅ Opening Outlook Calendar...', 'success');
+        closeMobileModal();
+        
+    } catch (error) {
+        console.error('Error opening Outlook:', error);
+        showNotification('❌ Could not open Outlook Calendar', 'error');
+    }
+}
+
+// COMPLETELY REWRITTEN ICS FUNCTION - This should fix Google Calendar compatibility
+function createImprovedICS(reminder) {
+    try {
+        const startDate = new Date(`${reminder.date}T${reminder.time}`);
+        const endDate = new Date(startDate.getTime() + 30 * 60000);
+        
+        // FIXED: Proper UTC date formatting for ICS
+        const toICSDate = (date) => {
+            return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+        };
+        
+        // FIXED: Proper text escaping for ICS format
+        const escapeICSText = (text) => {
+            if (!text) return '';
+            return text
+                .replace(/\\/g, '\\\\')
+                .replace(/;/g, '\\;')
+                .replace(/,/g, '\\,')
+                .replace(/\n/g, '\\n')
+                .replace(/\r/g, '')
+                .trim();
+        };
+        
+        // Generate unique UID
+        const uid = `medicine-${reminder.id}@medicinetracker.app`;
+        const timestamp = toICSDate(new Date());
+        
+        // FIXED: Proper ICS structure with all required fields
+        const icsContent = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//Medicine Tracker//Medicine Reminder//EN',
+            'CALSCALE:GREGORIAN',
+            'METHOD:PUBLISH',
+            'BEGIN:VEVENT',
+            `UID:${uid}`,
+            `DTSTAMP:${timestamp}`,
+            `DTSTART:${toICSDate(startDate)}`,
+            `DTEND:${toICSDate(endDate)}`,
+            `SUMMARY:💊 ${escapeICSText(reminder.medicineName)}`,
+            `DESCRIPTION:${escapeICSText(`Time to take ${reminder.medicineName}${reminder.message ? '. Note: ' + reminder.message : ''}`)}`,
+            'CATEGORIES:Medicine,Health,Reminder',
+            'STATUS:CONFIRMED',
+            'TRANSP:OPAQUE',
+            'PRIORITY:5',
+            'CLASS:PUBLIC',
+            // FIXED: Multiple alarms for better compatibility
+            'BEGIN:VALARM',
+            'TRIGGER:-PT0M',
+            'ACTION:DISPLAY',
+            `DESCRIPTION:${escapeICSText(`Time to take ${reminder.medicineName}!`)}`,
+            'END:VALARM',
+            'BEGIN:VALARM',
+            'TRIGGER:-PT15M',
+            'ACTION:DISPLAY',
+            `DESCRIPTION:${escapeICSText(`${reminder.medicineName} reminder in 15 minutes`)}`,
+            'END:VALARM',
+            'END:VEVENT',
+            'END:VCALENDAR'
+        ].join('\r\n'); // FIXED: Proper CRLF line endings
+        
+        // FIXED: Better blob creation with proper MIME type
+        const blob = new Blob([icsContent], { 
+            type: 'text/calendar;charset=utf-8' 
+        });
+        
+        // FIXED: Better filename
+        const safeName = reminder.medicineName.replace(/[^a-zA-Z0-9]/g, '-');
+        const safeDate = reminder.date.replace(/[^0-9]/g, '');
+        const filename = `medicine-${safeName}-${safeDate}.ics`;
+        
+        // Download the file
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.style.display = 'none';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+        
+        showNotification('📅 Calendar file downloaded!', 'success');
+        showImprovedInstructions();
+        closeMobileModal();
+        
+    } catch (error) {
+        console.error('ICS creation error:', error);
+        showNotification('❌ Could not create calendar file', 'error');
+    }
+}
+
+// IMPROVED INSTRUCTIONS
+function showImprovedInstructions() {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background: rgba(0,0,0,0.9); z-index: 5001; 
+        display: flex; align-items: center; justify-content: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    `;
+    
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 20px; padding: 25px; max-width: 90%; max-width: 450px; text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
+            <h3 style="color: #059669; margin-bottom: 15px;">Calendar File Downloaded!</h3>
+            
+            <div style="background: #f0fdf4; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: left;">
+                <h4 style="color: #16a34a; margin: 0 0 12px 0;">📱 For Google Calendar:</h4>
+                <ol style="color: #166534; line-height: 1.6; margin: 0; padding-left: 18px; font-size: 14px;">
+                    <li>Open <strong>Google Calendar</strong> app or website</li>
+                    <li>Click the <strong>+</strong> button or "Create"</li>
+                    <li>Select <strong>"Import"</strong></li>
+                    <li>Choose the downloaded .ics file</li>
+                    <li>Click <strong>"Import"</strong> to add the reminder</li>
+                </ol>
+            </div>
+            
+            <div style="background: #eff6ff; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: left;">
+                <h4 style="color: #1d4ed8; margin: 0 0 12px 0;">📱 For iPhone/iPad:</h4>
+                <ol style="color: #1e40af; line-height: 1.6; margin: 0; padding-left: 18px; font-size: 14px;">
+                    <li>Tap the downloaded file in Safari</li>
+                    <li>Choose <strong>"Add to Calendar"</strong></li>
+                    <li>Select which calendar to add to</li>
+                    <li>Tap <strong>"Done"</strong></li>
+                </ol>
+            </div>
+            
+            <div style="background: #f3f4f6; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: left;">
+                <h4 style="color: #374151; margin: 0 0 12px 0;">🖥️ For Desktop:</h4>
+                <ol style="color: #4b5563; line-height: 1.6; margin: 0; padding-left: 18px; font-size: 14px;">
+                    <li>Double-click the downloaded .ics file</li>
+                    <li>It will open in your default calendar app</li>
+                    <li>Click <strong>"Add"</strong> or <strong>"Import"</strong></li>
+                </ol>
+            </div>
+            
+            <button onclick="closeInstructionModal()" 
+                    style="background: #059669; color: white; border: none; padding: 15px 30px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 16px;">
+                Got it!
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    window.instructionModal = modal;
+    
+    // Auto-close after 20 seconds
+    setTimeout(() => {
+        if (window.instructionModal) {
+            closeInstructionModal();
+        }
+    }, 20000);
+}
+
+// GOOGLE CALENDAR FALLBACK
+function showGoogleCalendarFallback(url) {
+    closeMobileModal();
+    
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background: rgba(0,0,0,0.9); z-index: 5001; 
+        display: flex; align-items: center; justify-content: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    `;
+    
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 15px; padding: 30px; max-width: 90%; text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 15px;">🔗</div>
+            <h3 style="color: #dc2626; margin-bottom: 15px;">Manual Google Calendar Link</h3>
+            <p style="margin-bottom: 20px; color: #6b7280;">Click below to open Google Calendar:</p>
+            <a href="${url}" target="_blank" rel="noopener noreferrer" 
+               onclick="closeFallbackModal()" 
+               style="display: inline-block; background: #4285f4; color: white; padding: 15px 25px; border-radius: 10px; text-decoration: none; font-weight: 600; margin-bottom: 20px;">
+                🌐 Open Google Calendar
+            </a>
+            <br>
+            <button onclick="closeFallbackModal()" 
+                    style="background: #6b7280; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer;">
+                Close
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    window.fallbackModal = modal;
+}
+
+// COPY TEXT FUNCTION
+function copyReminderText(reminder) {
+    const details = `Medicine Reminder: ${reminder.medicineName}
+Date: ${formatDate(reminder.date)}
+Time: ${reminder.time}
+${reminder.message ? 'Note: ' + reminder.message : ''}
+${reminder.repeat !== 'once' ? 'Repeat: ' + reminder.repeat : ''}
+
+📅 Set this reminder in your calendar app!`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(details).then(() => {
+            showNotification('📋 Details copied! Paste into your calendar app.', 'success');
+            closeMobileModal();
+        }).catch(() => {
+            fallbackCopyText(details);
+        });
+    } else {
+        fallbackCopyText(details);
+    }
+}
+
+// FALLBACK COPY METHOD
+function fallbackCopyText(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0;';
+    document.body.appendChild(textArea);
+    textArea.select();
+    textArea.setSelectionRange(0, 99999);
+    
+    try {
+        document.execCommand('copy');
+        showNotification('📋 Details copied to clipboard!', 'success');
+        closeMobileModal();
+    } catch (err) {
+        console.error('Copy failed:', err);
+        showNotification('❌ Could not copy. Please copy manually.', 'error');
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+// MODAL CLOSE FUNCTIONS
 function closeMobileModal() {
     if (window.currentModal) {
         window.currentModal.remove();
@@ -1529,11 +1519,42 @@ function closeInstructionModal() {
     }
 }
 
+function closeFallbackModal() {
+    if (window.fallbackModal) {
+        window.fallbackModal.remove();
+        window.fallbackModal = null;
+    }
+}
+
+// BACKWARD COMPATIBILITY FUNCTIONS
+function createMobileICS(reminder) {
+    createImprovedICS(reminder);
+}
+
+function createICSFile(reminder) {
+    createImprovedICS(reminder);
+}
+
+function openGoogleCalendar(url) {
+    try {
+        const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+        if (!newWindow || newWindow.closed) {
+            showGoogleCalendarFallback(url);
+        } else {
+            showNotification('✅ Opening Google Calendar...', 'success');
+            closeMobileModal();
+        }
+    } catch (error) {
+        showGoogleCalendarFallback(url);
+    }
+}
+
+// STORAGE FUNCTIONS (keeping your existing ones)
 function saveReminder(reminder) {
     try {
         let reminders = [];
         
-        if (storageAvailable) {
+        if (typeof(Storage) !== "undefined" && localStorage) {
             const stored = localStorage.getItem('medicine_reminders');
             if (stored) {
                 reminders = JSON.parse(stored);
@@ -1544,7 +1565,7 @@ function saveReminder(reminder) {
         
         reminders.push(reminder);
         
-        if (storageAvailable) {
+        if (typeof(Storage) !== "undefined" && localStorage) {
             localStorage.setItem('medicine_reminders', JSON.stringify(reminders));
         } else {
             window.medicineReminders = JSON.stringify(reminders);
@@ -1559,7 +1580,7 @@ function saveReminder(reminder) {
 
 function loadReminders() {
     try {
-        if (storageAvailable) {
+        if (typeof(Storage) !== "undefined" && localStorage) {
             const stored = localStorage.getItem('medicine_reminders');
             return stored ? JSON.parse(stored) : [];
         } else if (window.medicineReminders) {
