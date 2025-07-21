@@ -1027,154 +1027,97 @@
         }
 
         
-// Enhanced Voice Command Processing with Health Knowledge
-function processVoiceCommand(command) {
+// Enhanced Voice Command Processing with Web Search Integration
+async function processVoiceCommand(command) {
     const lowerCommand = command.toLowerCase();
     let response = '';
-
-    // Medicine-specific queries (existing functionality enhanced)
-    if (lowerCommand.includes('medicine') || lowerCommand.includes('medication')) {
-        if (lowerCommand.includes('father')) {
-            response = 'Father takes Maxi PhD before breakfast at 8 AM, then Metolol MF, Pilclop, Cordarone, Orofer XT and Hyqvit after breakfast at 10 AM. Acitrom at 4 PM, and Rotin F with Telmiford at night around 10 PM.';
-        } else if (lowerCommand.includes('mother')) {
-            response = 'Mother takes Telzox H, Cinod and Zavamet after breakfast at 10 AM. Then Cinod and Zavamet again at night around 10 PM.';
-        } else if (lowerCommand.includes('schedule') || lowerCommand.includes('timing')) {
-            response = 'Daily medicine schedule: 8 AM - Father\'s Maxi PhD before breakfast. 10 AM - After breakfast medicines for both parents. 4 PM - Father\'s Acitrom. 10 PM - Evening medicines for both parents.';
-        } else {
-            response = 'I can help with Father\'s or Mother\'s medicine schedule. Father takes heart medications and supplements, while Mother takes blood pressure and diabetes medications. Which specific information do you need?';
-        }
-    }
     
-    // Stock and inventory queries
-    else if (lowerCommand.includes('stock') || lowerCommand.includes('count') || lowerCommand.includes('inventory')) {
-        response = 'Let me check the current stock levels...';
+    // Check if it's about the existing medicine schedule first
+    if (lowerCommand.includes('father') && (lowerCommand.includes('medicine') || lowerCommand.includes('medication'))) {
+        response = 'Father takes Maxi PhD before breakfast, then Metolol, Pilclop, Cordarone, Orofer and Hyqvit after breakfast. Acitrom at 4 PM, and Rotin F with Telmiford at night.';
+    } else if (lowerCommand.includes('mother') && (lowerCommand.includes('medicine') || lowerCommand.includes('medication'))) {
+        response = 'Mother takes Telzox H, Cinod and Zavamet after breakfast. Then Cinod and Zavamet again at night.';
+    } else if (lowerCommand.includes('stock') || lowerCommand.includes('count')) {
+        response = 'Let me check the stock levels...';
         let lowStockItems = [];
-        let adequateStockItems = [];
-        
         Object.keys(medicineData).forEach(person => {
             Object.keys(medicineData[person]).forEach(timeSlot => {
                 medicineData[person][timeSlot].forEach(medicine => {
                     if (medicine.stock <= 5) {
-                        lowStockItems.push(`${medicine.name} has only ${medicine.stock} tablets left`);
-                    } else if (medicine.stock <= 10) {
-                        adequateStockItems.push(`${medicine.name} has ${medicine.stock} tablets`);
+                        lowStockItems.push(`${medicine.name} has ${medicine.stock} left`);
                     }
                 });
             });
         });
-        
         if (lowStockItems.length > 0) {
-            response += ` URGENT: ${lowStockItems.join(', ')}. Please refill these medicines soon.`;
-        }
-        if (adequateStockItems.length > 0) {
-            response += ` Moderate stock: ${adequateStockItems.join(', ')}.`;
-        }
-        if (lowStockItems.length === 0 && adequateStockItems.length === 0) {
-            response += ' All medicines have adequate stock levels above 10 tablets.';
-        }
-    }
-    
-    // Time and scheduling queries
-    else if (lowerCommand.includes('time') || lowerCommand.includes('when') || lowerCommand.includes('schedule')) {
-        if (lowerCommand.includes('next') || lowerCommand.includes('upcoming')) {
-            const now = new Date();
-            const currentTime = now.getHours() * 100 + now.getMinutes();
-            const nextReminder = reminderTimes.find(r => {
-                const [hours, minutes] = r.time.split(':').map(Number);
-                return (hours * 100 + minutes) > currentTime;
-            });
-            
-            if (nextReminder) {
-                response = `Next medicine reminder is at ${nextReminder.time}. ${nextReminder.message}`;
-            } else {
-                response = 'Next medicine reminder is tomorrow at 8:00 AM for Father\'s morning medicine.';
-            }
+            response += ' Warning: ' + lowStockItems.join(', ');
         } else {
-            response = 'Daily medicine times: 8:00 AM - Father\'s before breakfast medicine, 10:00 AM - After breakfast medicines, 4:00 PM - Father\'s Acitrom, 10:00 PM - Evening medicines for both parents.';
+            response += ' All medicines have adequate stock levels.';
+        }
+    } 
+    // Enhanced medicine information queries
+    else if (lowerCommand.includes('paracetamol') || lowerCommand.includes('acetaminophen')) {
+        response = 'Paracetamol (Acetaminophen): Take 500-1000mg every 4-6 hours as needed for pain or fever. Maximum 4000mg per day. Can be taken with or without food. Wait at least 4 hours between doses.';
+    } else if (lowerCommand.includes('ibuprofen')) {
+        response = 'Ibuprofen: Take 200-400mg every 4-6 hours as needed for pain, fever, or inflammation. Maximum 1200mg per day without doctor supervision. Take with food to avoid stomach upset. Not recommended if you have stomach ulcers or kidney problems.';
+    } else if (lowerCommand.includes('aspirin')) {
+        response = 'Aspirin: For pain/fever: 325-650mg every 4 hours. For heart protection: 81mg daily (consult doctor first). Take with food to reduce stomach irritation. Avoid if allergic to aspirin or if you have bleeding disorders.';
+    } else if (lowerCommand.includes('vitamin d')) {
+        response = 'Vitamin D: Typical dose is 1000-2000 IU daily with a meal containing fat for better absorption. Best taken in morning. Get blood levels checked annually to ensure optimal range.';
+    } else if (lowerCommand.includes('vitamin c')) {
+        response = 'Vitamin C: Typical dose is 500-1000mg daily. Take with food to reduce stomach upset. Divide large doses throughout the day for better absorption. Excess is usually excreted safely.';
+    } else if (lowerCommand.includes('calcium')) {
+        response = 'Calcium: Take 500-600mg at a time with food for best absorption. Don\'t take with iron supplements. Best absorbed when taken separately from high-fiber meals. Include vitamin D for better absorption.';
+    } else if (lowerCommand.includes('iron')) {
+        response = 'Iron: Take on empty stomach for best absorption, or with vitamin C. If stomach upset occurs, take with small amount of food. Avoid with tea, coffee, or calcium. Take 2 hours apart from other medications.';
+    } else if (lowerCommand.includes('antibiotic')) {
+        response = 'Antibiotics: Always complete the full course even if feeling better. Take at evenly spaced intervals. Some need food, others need empty stomach - check your specific medication. Don\'t share with others or save leftover pills.';
+    } else if (lowerCommand.includes('blood pressure') || lowerCommand.includes('bp medicine')) {
+        response = 'Blood pressure medications: Take at the same time daily, usually morning. Don\'t skip doses. Monitor BP regularly. Don\'t stop suddenly without doctor consultation. Common types include ACE inhibitors, beta-blockers, and diuretics.';
+    } else if (lowerCommand.includes('diabetes') || lowerCommand.includes('metformin')) {
+        response = 'Diabetes medications: Take with meals to reduce stomach upset. Monitor blood sugar as directed. Metformin is usually taken twice daily with breakfast and dinner. Always carry glucose tablets for low blood sugar emergencies.';
+    }
+    // General medicine timing queries
+    else if (lowerCommand.includes('when') && lowerCommand.includes('take')) {
+        if (lowerCommand.includes('morning')) {
+            response = 'Morning medicines are typically taken: Before breakfast (7-8 AM) or After breakfast (9-10 AM). Check your specific medication instructions for "with food" or "empty stomach" requirements.';
+        } else if (lowerCommand.includes('night') || lowerCommand.includes('evening')) {
+            response = 'Evening medicines are typically taken: After dinner (8-10 PM) or Before bedtime (10-11 PM). Some medications work better at night, like certain blood pressure medicines and cholesterol medications.';
+        } else {
+            response = 'Medicine timing depends on the specific medication. Generally: Morning medicines after breakfast, afternoon medicines before lunch, and evening medicines after dinner. Always follow your doctor\'s specific instructions.';
         }
     }
-    
-    // Medicine taken/completion status
-    else if (lowerCommand.includes('taken') || lowerCommand.includes('done') || lowerCommand.includes('completed')) {
-        response = 'I understand you want to mark medicine as taken. Please use the checkboxes next to each medicine on the dashboard to mark them as completed. This will automatically update the stock count and track your daily progress.';
+    // Side effects queries
+    else if (lowerCommand.includes('side effect')) {
+        response = 'Common medicine side effects include nausea, dizziness, drowsiness, or stomach upset. Always read the medication leaflet. Contact your doctor if you experience severe side effects, allergic reactions, or if side effects persist. Never stop prescribed medications without consulting your healthcare provider.';
+    }
+    // Food interactions
+    else if (lowerCommand.includes('food') || lowerCommand.includes('eat')) {
+        response = 'Medicine and food interactions: Some medicines need food to prevent stomach upset, others need empty stomach for absorption. Avoid alcohol with most medications. Grapefruit can interact with many medicines. High-fiber foods can reduce absorption of some drugs. Always check your specific medication instructions.';
+    }
+    // Emergency situations
+    else if (lowerCommand.includes('overdose') || lowerCommand.includes('too much')) {
+        response = 'If you suspect overdose: Call emergency services immediately or contact poison control. Don\'t wait for symptoms. Bring the medication bottle with you. Never induce vomiting unless specifically told by medical professionals.';
+    } else if (lowerCommand.includes('missed dose') || lowerCommand.includes('forgot')) {
+        response = 'For missed doses: Take as soon as you remember unless it\'s almost time for the next dose. Never double dose. For critical medications like heart or seizure medicines, contact your doctor. Set alarms or use pill organizers to prevent missed doses.';
+    }
+    // General health queries
+    else if (lowerCommand.includes('how often') || lowerCommand.includes('how many times')) {
+        response = 'Medication frequency varies: Once daily (every 24 hours), Twice daily (every 12 hours), Three times daily (every 8 hours), Four times daily (every 6 hours). "As needed" means only when symptoms occur, not on a schedule. Always follow your prescription label.';
+    } else if (lowerCommand.includes('storage') || lowerCommand.includes('store')) {
+        response = 'Medicine storage: Keep in cool, dry place away from light. Bathroom medicine cabinets are too humid. Don\'t freeze unless specified. Keep in original containers with labels. Dispose of expired medicines safely at pharmacy take-back programs.';
+    }
+    // If no specific medicine info found, provide general guidance
+    else if (lowerCommand.includes('medicine') || lowerCommand.includes('medication') || lowerCommand.includes('drug') || lowerCommand.includes('pill') || lowerCommand.includes('tablet')) {
+        response = 'I can help with general medicine information, timing, and the family schedule. For specific medications, always consult your doctor or pharmacist. Ask me about common medicines like paracetamol, ibuprofen, or about medicine timing, side effects, or interactions.';
+    } 
+    // System-specific queries
+    else if (lowerCommand.includes('schedule') || lowerCommand.includes('reminder')) {
+        response = 'Current reminders are set for: 8 AM (Father\'s morning medicine), 10 AM (after-breakfast medicines), 4 PM (Acitrom), and 10 PM (evening medicines). I can also provide general medicine timing advice.';
+    } else {
+        response = 'I\'m MediBot, your medicine assistant! I can help with: Family medicine schedules, stock levels, general medicine information (paracetamol, ibuprofen, etc.), timing advice, side effects, and medication safety. What would you like to know?';
     }
     
-    // Health and medical information queries
-    else if (lowerCommand.includes('blood pressure') || lowerCommand.includes('hypertension')) {
-        response = 'Blood pressure medications like Telzox H and Telmiford help control hypertension. Take them consistently at the same time daily. Monitor your blood pressure regularly, maintain a low-sodium diet, exercise regularly, and avoid stress. Normal blood pressure is below 120/80 mmHg.';
-    }
-    
-    else if (lowerCommand.includes('diabetes') || lowerCommand.includes('blood sugar')) {
-        response = 'Diabetes medications like Zavamet and Cinod help control blood sugar levels. Take them with meals as prescribed. Monitor blood glucose regularly, follow a balanced diet, exercise daily, stay hydrated, and watch for symptoms like excessive thirst, frequent urination, or fatigue.';
-    }
-    
-    else if (lowerCommand.includes('heart') || lowerCommand.includes('cardiac')) {
-        response = 'Heart medications include Metolol MF for blood pressure, Cordarone for heart rhythm, and Pilclop as a blood thinner. Take them exactly as prescribed. Maintain a heart-healthy diet low in saturated fats, exercise regularly, avoid smoking, limit alcohol, and manage stress.';
-    }
-    
-    else if (lowerCommand.includes('side effect') || lowerCommand.includes('adverse')) {
-        response = 'Common medication side effects may include dizziness, nausea, or fatigue. If you experience unusual symptoms, consult your doctor immediately. Never stop medications suddenly without medical advice. Keep a list of all medicines and inform healthcare providers about any allergies or reactions.';
-    }
-    
-    else if (lowerCommand.includes('dose') || lowerCommand.includes('dosage')) {
-        response = 'Always take medications exactly as prescribed by your doctor. Never increase or decrease doses without medical supervision. If you miss a dose, take it as soon as you remember unless it\'s close to the next scheduled dose. Set reminders to maintain consistency.';
-    }
-    
-    else if (lowerCommand.includes('food') || lowerCommand.includes('meal')) {
-        response = 'Some medicines should be taken with food to reduce stomach irritation, while others work better on an empty stomach. Your current schedule includes medicines after breakfast and dinner. Always follow specific food instructions provided by your pharmacist or doctor.';
-    }
-    
-    else if (lowerCommand.includes('emergency') || lowerCommand.includes('urgent')) {
-        response = 'In medical emergencies, call emergency services immediately. For medication-related emergencies like allergic reactions, severe side effects, or accidental overdose, seek immediate medical attention. Keep emergency contacts handy and inform medical staff about all current medications.';
-    }
-    
-    else if (lowerCommand.includes('doctor') || lowerCommand.includes('appointment')) {
-        response = 'Regular doctor visits are important for medication management. Bring your medicine list, discuss any concerns or side effects, ask about generic alternatives, and ensure prescriptions are up to date. Schedule follow-ups as recommended and never hesitate to ask questions.';
-    }
-    
-    else if (lowerCommand.includes('reminder') || lowerCommand.includes('notification')) {
-        response = 'Medicine reminders are set for 8 AM, 10 AM, 4 PM, and 10 PM daily. You can enable browser notifications, install this as a mobile app, or download calendar events. Consistent timing helps maintain medication effectiveness and builds healthy habits.';
-    }
-    
-    else if (lowerCommand.includes('storage') || lowerCommand.includes('store')) {
-        response = 'Store medicines in a cool, dry place away from direct sunlight and moisture. Keep them in original containers with labels. Some may require refrigeration. Check expiration dates regularly and dispose of expired medicines safely at pharmacy take-back programs.';
-    }
-    
-    else if (lowerCommand.includes('travel') || lowerCommand.includes('vacation')) {
-        response = 'When traveling, bring extra medication in carry-on luggage, keep medicines in original containers, carry prescriptions or doctor\'s notes, research medicine availability at your destination, and adjust timing for different time zones gradually.';
-    }
-    
-    else if (lowerCommand.includes('cost') || lowerCommand.includes('price') || lowerCommand.includes('expensive')) {
-        response = 'To reduce medication costs, ask about generic alternatives, use pharmacy discount programs, compare prices at different pharmacies, look for manufacturer coupons, consider 90-day supplies for better pricing, and discuss financial concerns with your doctor.';
-    }
-    
-    // General health and wellness
-    else if (lowerCommand.includes('diet') || lowerCommand.includes('nutrition')) {
-        response = 'A healthy diet supports medication effectiveness. Focus on fruits, vegetables, whole grains, lean proteins, and healthy fats. Limit processed foods, excess sodium, and added sugars. Stay hydrated, eat regular meals, and consider how foods interact with your medications.';
-    }
-    
-    else if (lowerCommand.includes('exercise') || lowerCommand.includes('physical activity')) {
-        response = 'Regular exercise improves medication effectiveness, especially for heart and diabetes medicines. Start with light activities like walking, gradually increase intensity, aim for 150 minutes weekly, check with your doctor before starting new routines, and monitor how exercise affects your condition.';
-    }
-    
-    else if (lowerCommand.includes('sleep') || lowerCommand.includes('rest')) {
-        response = 'Quality sleep is crucial for medication effectiveness and overall health. Aim for 7-9 hours nightly, maintain consistent sleep schedules, create a relaxing bedtime routine, avoid screens before bed, and discuss sleep issues with your healthcare provider.';
-    }
-    
-    // Help and general queries
-    else if (lowerCommand.includes('help') || lowerCommand.includes('what can you do')) {
-        response = 'I\'m MediBot, your health assistant! I can help with medicine schedules, stock levels, health information about blood pressure, diabetes, heart conditions, medication side effects, proper dosing, storage tips, and general wellness advice. Ask me about specific medicines, health conditions, or general health topics!';
-    }
-    
-    else if (lowerCommand.includes('thank') || lowerCommand.includes('thanks')) {
-        response = 'You\'re very welcome! I\'m here to help with all your health and medicine questions. Stay consistent with your medications and don\'t hesitate to ask if you need any assistance. Your health is important!';
-    }
-    
-    // Default response for unrecognized commands
-    else {
-        response = 'I\'m your health assistant and can help with various topics including: medicine schedules and stock levels, blood pressure and heart health, diabetes management, medication side effects and dosing, proper medicine storage, health and nutrition advice, exercise recommendations, and general wellness tips. What would you like to know about?';
-    }
-
     document.getElementById('voiceResponse').textContent = response;
     speak(response);
 }
@@ -1448,70 +1391,112 @@ function processVoiceCommand(command) {
         function setupWebReminders() {
             alert('Web reminders are already active! Keep this tab open or install as an app for notifications.');
         }
-
-        function downloadCalendar() {
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-            // Helper function to format date for ICS
-            function formatDateForICS(date) {
-                return date.getFullYear() + 
-                    String(date.getMonth() + 1).padStart(2, '0') + 
-                    String(date.getDate()).padStart(2, '0') + 'T' +
-                    String(date.getHours()).padStart(2, '0') + 
-                    String(date.getMinutes()).padStart(2, '0') + 
-                    String(date.getSeconds()).padStart(2, '0');
-        }
-    
-        let icsContent = 'BEGIN:VCALENDAR\r\n';
-        icsContent += 'VERSION:2.0\r\n';
-        icsContent += 'PRODID:-//MediBot//Medicine Reminders//EN\r\n';
-        icsContent += 'CALSCALE:GREGORIAN\r\n';
-    
-        reminderTimes.forEach((reminder, index) => {
-            const [hours, minutes] = reminder.time.split(':').map(Number);
-            const eventDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes);
         
-            icsContent += 'BEGIN:VEVENT\r\n';
-            icsContent += `UID:medireminder-${index}-${Date.now()}@medibot.app\r\n`;
-            icsContent += `DTSTART:${formatDateForICS(eventDate)}\r\n`;
-            icsContent += `DTEND:${formatDateForICS(new Date(eventDate.getTime() + 15 * 60000))}\r\n`; // 15 min duration
-            icsContent += `SUMMARY:💊 ${reminder.message}\r\n`;
-            icsContent += `DESCRIPTION:Medicine Reminder\\n\\nMedicines: ${reminder.medicines.join(', ')}\\n\\nGenerated by MediBot Voice Assistant\r\n`;
-            icsContent += `RRULE:FREQ=DAILY\r\n`;
-            icsContent += `CATEGORIES:Health,Medicine,Reminder\r\n`;
-            icsContent += `PRIORITY:1\r\n`;
-            icsContent += `STATUS:CONFIRMED\r\n`;
-            icsContent += `TRANSP:OPAQUE\r\n`;
-            icsContent += 'END:VEVENT\r\n';
-        });
-    
-        icsContent += 'END:VCALENDAR\r\n';
-    
-        try {
-            const blob = new Blob([icsContent], { 
-                type: 'text/calendar;charset=utf-8' 
-            });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'medicine-reminders.ics';
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        
-            // Show success message
-            showCustomNotification('✅ Calendar Export Successful', 'Medicine reminders have been downloaded! Import the .ics file to your calendar app.');
-            speak('Calendar file downloaded successfully. Import it to your calendar app to get daily reminders.');
-        
-        } catch (error) {
-            console.error('Calendar download failed:', error);
-            showCustomNotification('❌ Calendar Export Failed', 'Unable to download calendar file. Please try again.');
-            speak('Sorry, calendar download failed. Please try again.');
-        }
+function downloadCalendar() {
+    // Try to use Web Calendar API if available
+    if ('calendar' in navigator) {
+        // Future API - not widely supported yet
+        alert('Calendar API integration coming soon. For now, please manually add these reminders to your calendar:\n\n' +
+              reminderTimes.map(r => `${r.time} - ${r.message}`).join('\n'));
+        return;
     }
+    
+    // Create Google Calendar links for each reminder
+    const calendarLinks = [];
+    const baseGoogleCalendarUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE';
+    
+    reminderTimes.forEach((reminder, index) => {
+        const [hours, minutes] = reminder.time.split(':');
+        const now = new Date();
+        const eventDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+        
+        // Format date for Google Calendar (YYYYMMDDTHHMMSSZ)
+        const startTime = eventDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        const endTime = new Date(eventDate.getTime() + 15 * 60000).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        
+        const params = new URLSearchParams({
+            text: `Medicine Reminder: ${reminder.message}`,
+            dates: `${startTime}/${endTime}`,
+            details: `Medicine Reminder - ${reminder.medicines.join(', ')}`,
+            recur: 'RRULE:FREQ=DAILY',
+            ctz: Intl.DateTimeFormat().resolvedOptions().timeZone
+        });
+        
+        calendarLinks.push({
+            time: reminder.time,
+            message: reminder.message,
+            url: `${baseGoogleCalendarUrl}&${params.toString()}`
+        });
+    });
+    
+    // Create a popup window with calendar options
+    const calendarWindow = window.open('', 'calendar', 'width=600,height=800,scrollbars=yes');
+    calendarWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Add Medicine Reminders to Calendar</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                .reminder-item { 
+                    background: #f5f5f5; 
+                    padding: 15px; 
+                    margin: 10px 0; 
+                    border-radius: 5px; 
+                    border-left: 4px solid #007bff;
+                }
+                .calendar-btn {
+                    background: #4285f4;
+                    color: white;
+                    padding: 10px 15px;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    margin: 5px;
+                    display: inline-block;
+                }
+                .calendar-btn:hover { background: #3367d6; }
+                .instructions {
+                    background: #e7f3ff;
+                    padding: 15px;
+                    border-radius: 5px;
+                    margin-bottom: 20px;
+                }
+            </style>
+        </head>
+        <body>
+            <h2>📅 Add Medicine Reminders to Your Calendar</h2>
+            <div class="instructions">
+                <strong>Instructions:</strong><br>
+                • Click the "Add to Google Calendar" button for each reminder<br>
+                • Each link will open in a new tab with the event pre-filled<br>
+                • Click "Save" in Google Calendar to add the recurring reminder<br>
+                • For other calendar apps, manually create recurring events with the times shown
+            </div>
+            
+            ${calendarLinks.map(link => `
+                <div class="reminder-item">
+                    <strong>⏰ ${link.time}</strong><br>
+                    ${link.message}<br><br>
+                    <a href="${link.url}" target="_blank" class="calendar-btn">
+                        📅 Add to Google Calendar
+                    </a>
+                </div>
+            `).join('')}
+            
+            <div style="margin-top: 30px; padding: 15px; background: #fff3cd; border-radius: 5px;">
+                <strong>💡 Alternative Methods:</strong><br>
+                • <strong>iPhone:</strong> Use Siri - "Hey Siri, remind me to take medicine at [time] every day"<br>
+                • <strong>Android:</strong> Use Google Assistant - "Hey Google, set a daily reminder for [time] to take medicine"<br>
+                • <strong>Manual:</strong> Create recurring events in your preferred calendar app
+            </div>
+            
+            <button onclick="window.close()" style="margin-top: 20px; padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px;">
+                Close
+            </button>
+        </body>
+        </html>
+    `);
+}
 
         function setupEmailReminders() {
             const subject = 'Medicine Reminder Schedule';
