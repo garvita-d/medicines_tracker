@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medicine Reminder System</title>
+    <title>Medicine Tracking System</title>
     <meta name="theme-color" content="#4F46E5">
     <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiTWVkaWNpbmUgUmVtaW5kZXIgU3lzdGVtIiwic2hvcnRfbmFtZSI6Ik1lZFJlbWluZGVyIiwic3RhcnRfdXJsIjoiLyIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNGRkZGRkYiLCJ0aGVtZV9jb2xvciI6IiM0RjQ2RTUiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCM2FXUjBhRDBpTWpRaUlHaGxhV2QwZEQwaU1qUWlJSFpwWlhkQ2IzZzlJakFnTUNBeU5DQXlOQ0lnWm1sc2JEMGlJelEyTmpreVJTSStQR05wY21Oc1pTQmplRDBpTVRJaUlHTjVQU0l4TWlJZ2NqMGlOU0lnWm1sc2JEMGlJekZHUXpjelFTSXZQand2YzNablBnPT0iLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2Uvc3ZnK3htbCJ9XX0=">
     
@@ -550,28 +550,18 @@
 
         <!-- Calendar Integration Section -->
         <div class="calendar-integration">
-            <h3>📅 Google Calendar Integration</h3>
+            <h3>Google Calendar Integration</h3>
             <p>Add medicine reminders directly to your Google Calendar for automatic notifications on your phone!</p>
             
             <div class="calendar-buttons">
-                <a href="#" class="calendar-btn" onclick="addAllReminders('father')">
-                    👨 Add Father's Reminders
-                </a>
-                <a href="#" class="calendar-btn" onclick="addAllReminders('mother')">
-                    👩 Add Mother's Reminders
-                </a>
                 <a href="#" class="calendar-btn" onclick="addCustomReminder()">
                     ➕ Custom Reminder
-                </a>
-                <a href="#" class="calendar-btn" onclick="openGoogleCalendar()">
-                    🔗 Open Google Calendar
                 </a>
             </div>
             
             <div class="calendar-info">
-                <strong>📱 How it works:</strong><br>
-                • Click any button above to create calendar events<br>
-                • Events will open in Google Calendar app on mobile<br>
+                <strong>How it works:</strong><br>
+                • Click on button above to create calendar events<br>
                 • Set your preferred notification time (15min, 1hr, etc.)<br>
                 • Reminders will repeat daily automatically<br>
                 • Works offline once added to your calendar
@@ -614,7 +604,7 @@
     <div class="calendar-modal" id="customReminderModal">
         <div class="calendar-modal-content">
             <button class="close-modal" onclick="closeCustomReminderModal()">&times;</button>
-            <h2>📅 Create Custom Medicine Reminder</h2>
+            <h2>Create Custom Medicine Reminder</h2>
             <div class="reminder-form">
                 <div class="form-group">
                     <label for="medicineName">Medicine Name:</label>
@@ -639,7 +629,7 @@
                 </div>
                 <div class="action-buttons">
                     <button class="btn btn-calendar" onclick="createCustomReminder()">
-                        📅 Add to Calendar
+                        Add to Calendar
                     </button>
                     <button class="btn" onclick="closeCustomReminderModal()" style="background: #6B7280; color: white;">
                         Cancel
@@ -863,7 +853,7 @@
             
             // Check if already taken today
             if (medicine.lastTaken === today) {
-                showNotification('💊 Medicine already taken today!', 'error');
+                showNotification(' Medicine already taken today!', 'error');
                 return;
             }
             
@@ -895,7 +885,7 @@
                 saveToStorage(medicineData);
                 renderMedicines();
                 
-                showNotification('🔄 All medicine stock has been reset to original levels!');
+                showNotification(' All medicine stock has been reset to original levels!');
             }
         }
 
@@ -922,8 +912,8 @@
                     
                     const title = timeSlot.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
                     const timeEmoji = {
-                        morning: '🌅',
-                        afterBreakfast: '🍳',
+                        beforeBreakfast: '🌅',
+                        afterBreakfast: '🥞',
                         afternoon: '☀️',
                         afterDinner: '🌙'
                     }[timeSlot] || '💊';
@@ -939,7 +929,7 @@
                         medicineDiv.className = `medicine-item ${isLowStock ? 'low-stock' : ''} ${isTakenToday ? 'taken-today' : ''}`;
                         
                         const stockClass = isLowStock ? 'low' : isTakenToday ? 'taken' : '';
-                        const stockText = isTakenToday ? '✅ Taken Today' : `${medicine.stock} left`;
+                        const stockText = isTakenToday ? 'Taken Today' : `${medicine.stock} left`;
                         
                         medicineDiv.innerHTML = `
                             <div class="medicine-header">
@@ -1026,7 +1016,7 @@
                 window.open(calendarUrl, '_blank', 'width=600,height=600');
             }
             
-            showNotification(`📅 Calendar reminder created for ${medicine.name}!`);
+            showNotification(`Calendar reminder created for ${medicine.name}!`);
         }
 
         function addAllReminders(person) {
@@ -1063,7 +1053,7 @@
                 });
             });
             
-            showNotification(`📅 Opening ${reminderCount} calendar reminders for ${person}!`);
+            showNotification(`Opening ${reminderCount} calendar reminders for ${person}!`);
         }
 
         function addCustomReminder() {
@@ -1106,7 +1096,7 @@
                 window.open(calendarUrl, '_blank', 'width=600,height=600');
             }
             
-            showNotification(`📅 Custom reminder created for ${medicineName}!`);
+            showNotification(`Custom reminder created for ${medicineName}!`);
             closeCustomReminderModal();
             
             // Clear form
@@ -1122,7 +1112,7 @@
                 : 'https://calendar.google.com/calendar/u/0/r';
             
             window.open(calendarUrl, '_blank');
-            showNotification('📅 Opening Google Calendar...');
+            showNotification('Opening Google Calendar...');
         }
 
         // Voice Assistant Functions
@@ -1342,11 +1332,11 @@
             let instructions = '';
             
             if (isIOS) {
-                instructions = '📱 To install on iOS:\n\n1. Tap the Share button (⬆️)\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add" in the top right corner';
+                instructions = ' To install on iOS:\n\n1. Tap the Share button (⬆️)\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add" in the top right corner';
             } else if (isAndroid) {
-                instructions = '📱 To install on Android:\n\n1. Tap the menu (⋮) in your browser\n2. Tap "Add to Home screen" or "Install app"\n3. Tap "Add" or "Install"';
+                instructions = ' To install on Android:\n\n1. Tap the menu (⋮) in your browser\n2. Tap "Add to Home screen" or "Install app"\n3. Tap "Add" or "Install"';
             } else {
-                instructions = '💻 To install on Desktop:\n\n1. Look for the install icon (⬇️) in your browser\'s address bar\n2. Click it and follow the prompts\n3. Or use browser menu > "Install Medicine Reminder"';
+                instructions = 'To install on Desktop:\n\n1. Look for the install icon (⬇️) in your browser\'s address bar\n2. Click it and follow the prompts\n3. Or use browser menu > "Install Medicine Reminder"';
             }
             
             alert(instructions);
