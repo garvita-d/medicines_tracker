@@ -727,8 +727,11 @@
             updateStorageStatus();
             
             initializeData();
+            initializeReminders();
             renderFatherMedicines();
             renderMotherMedicines();
+           
+
             
             // Show install prompt on mobile
             if (isMobile() && !isAppInstalled()) {
@@ -942,10 +945,374 @@
         }
     }
 
-    function viewCalendar(person, medicineName) {
-        // This could be expanded to show a full calendar view
-        showNotification(`📅 Calendar view for ${medicineName} - Feature coming soon!`);
+    // Replace the viewCalendar function with this new implementation:
+function viewCalendar(person, medicineName) {
+    showCalendarModal(person, medicineName);
+}
+
+// Add these new functions for calendar functionality:
+function showCalendarModal(person, medicineName) {
+    // Create modal HTML
+    const modalHTML = `
+        <div id="calendarModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; display: flex; align-items: center; justify-content: center;">
+            <div style="background: white; border-radius: 20px; padding: 30px; max-width: 90%; max-height: 90%; overflow-y: auto; position: relative;">
+                <button onclick="closeCalendarModal()" style="position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">×</button>
+                
+                <h2 style="color: #4F46E5; margin-bottom: 20px; text-align: center;">📅 Set Reminder for ${medicineName}</h2>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">Select Date:</label>
+                    <input type="date" id="reminderDate" style="width: 100%; padding: 12px; border: 2px solid #E5E7EB; border-radius: 10px; font-size: 16px;" min="${new Date().toISOString().split('T')[0]}">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">Select Time:</label>
+                    <input type="time" id="reminderTime" style="width: 100%; padding: 12px; border: 2px solid #E5E7EB; border-radius: 10px; font-size: 16px;">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">Reminder Message (Optional):</label>
+                    <textarea id="reminderMessage" placeholder="e.g., Take with food, Check blood pressure first, etc." style="width: 100%; padding: 12px; border: 2px solid #E5E7EB; border-radius: 10px; font-size: 16px; min-height: 80px; resize: vertical;"></textarea>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">Repeat:</label>
+                    <select id="reminderRepeat" style="width: 100%; padding: 12px; border: 2px solid #E5E7EB; border-radius: 10px; font-size: 16px;">
+                        <option value="once">Once</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 15px; margin-top: 30px;">
+                    <button onclick="setReminder('${person}', '${medicineName}')" style="flex: 1; background: linear-gradient(45deg, #10B981, #059669); color: white; border: none; padding: 15px 25px; border-radius: 25px; cursor: pointer; font-weight: 600; font-size: 16px;">
+                        🔔 Set Reminder
+                    </button>
+                    <button onclick="closeCalendarModal()" style="flex: 1; background: linear-gradient(45deg, #6B7280, #4B5563); color: white; border: none; padding: 15px 25px; border-radius: 25px; cursor: pointer; font-weight: 600; font-size: 16px;">
+                        Cancel
+                    </button>
+                </div>
+                
+                <div id="existingReminders" style="margin-top: 30px;">
+                    <h3 style="color: #4F46E5; margin-bottom: 15px; border-top: 2px solid #E5E7EB; padding-top: 20px;">📋 Existing Reminders</h3>
+                    <div id="remindersList"></div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to document
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Load existing reminders
+    loadExistingReminders(person, medicineName);
+    
+    // Set default time based on medicine schedule
+    setDefaultReminderTime(person, medicineName);
+}
+
+function setDefaultReminderTime(person, medicineName) {
+    const timeInput = document.getElementById('reminderTime');
+    const dateInput = document.getElementById('reminderDate');
+    
+    // Set default date to today
+    dateInput.value = new Date().toISOString().split('T')[0];
+    
+    // Set default time based on medicine schedule
+    const defaultTimes = {
+        'morning': '08:00',
+        'afterBreakfast': '09:30',
+        'afternoon': '16:00',
+        'afterDinner': '21:00'
+    };
+    
+    // Find the medicine and its time slot
+    let defaultTime = '09:00';
+    Object.entries(medicineData[person]).forEach(([timeSlot, medicines]) => {
+        medicines.forEach(medicine => {
+            if (medicine.name === medicineName) {
+                defaultTime = defaultTimes[timeSlot] || '09:00';
+            }
+        });
+    });
+    
+    timeInput.value = defaultTime;
+}
+
+function setReminder(person, medicineName) {
+    const date = document.getElementById('reminderDate').value;
+    const time = document.getElementById('reminderTime').value;
+    const message = document.getElementById('reminderMessage').value;
+    const repeat = document.getElementById('reminderRepeat').value;
+    
+    if (!date || !time) {
+        showNotification('⚠️ Please select both date and time for the reminder', 'error');
+        return;
     }
+    
+    const reminderDateTime = new Date(`${date}T${time}`);
+    const now = new Date();
+    
+    if (reminderDateTime <= now) {
+        showNotification('⚠️ Please select a future date and time', 'error');
+        return;
+    }
+    
+    // Create reminder object
+    const reminder = {
+        id: Date.now(),
+        person: person,
+        medicineName: medicineName,
+        date: date,
+        time: time,
+        message: message,
+        repeat: repeat,
+        active: true,
+        created: new Date().toISOString()
+    };
+    
+    // Save reminder
+    saveReminder(reminder);
+    
+    // Schedule notification
+    scheduleNotification(reminder);
+    
+    showNotification(`🔔 Reminder set for ${medicineName} on ${formatDate(date)} at ${time}`);
+    
+    // Refresh reminder list
+    loadExistingReminders(person, medicineName);
+}
+
+function saveReminder(reminder) {
+    try {
+        let reminders = [];
+        
+        if (storageAvailable) {
+            const stored = localStorage.getItem('medicine_reminders');
+            if (stored) {
+                reminders = JSON.parse(stored);
+            }
+        } else if (window.medicineReminders) {
+            reminders = JSON.parse(window.medicineReminders);
+        }
+        
+        reminders.push(reminder);
+        
+        if (storageAvailable) {
+            localStorage.setItem('medicine_reminders', JSON.stringify(reminders));
+        } else {
+            window.medicineReminders = JSON.stringify(reminders);
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error saving reminder:', error);
+        return false;
+    }
+}
+
+function loadReminders() {
+    try {
+        if (storageAvailable) {
+            const stored = localStorage.getItem('medicine_reminders');
+            return stored ? JSON.parse(stored) : [];
+        } else if (window.medicineReminders) {
+            return JSON.parse(window.medicineReminders);
+        }
+        return [];
+    } catch (error) {
+        console.error('Error loading reminders:', error);
+        return [];
+    }
+}
+
+function loadExistingReminders(person, medicineName) {
+    const remindersList = document.getElementById('remindersList');
+    const allReminders = loadReminders();
+    const medicineReminders = allReminders.filter(r => 
+        r.person === person && 
+        r.medicineName === medicineName && 
+        r.active &&
+        new Date(`${r.date}T${r.time}`) > new Date()
+    );
+    
+    if (medicineReminders.length === 0) {
+        remindersList.innerHTML = '<p style="color: #6B7280; text-align: center; padding: 20px;">No active reminders</p>';
+        return;
+    }
+    
+    remindersList.innerHTML = medicineReminders.map(reminder => `
+        <div style="background: linear-gradient(45deg, #f0f9ff, #e0f2fe); padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid #0ea5e9;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong style="color: #0369a1;">📅 ${formatDate(reminder.date)} at ${reminder.time}</strong>
+                    <p style="color: #64748b; margin: 5px 0;">${reminder.repeat !== 'once' ? `Repeats: ${reminder.repeat}` : 'One-time reminder'}</p>
+                    ${reminder.message ? `<p style="color: #475569; font-style: italic;">"${reminder.message}"</p>` : ''}
+                </div>
+                <button onclick="deleteReminder(${reminder.id}, '${person}', '${medicineName}')" 
+                        style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 15px; cursor: pointer; font-size: 12px;">
+                    🗑️ Delete
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function deleteReminder(reminderId, person, medicineName) {
+    try {
+        let reminders = loadReminders();
+        reminders = reminders.filter(r => r.id !== reminderId);
+        
+        if (storageAvailable) {
+            localStorage.setItem('medicine_reminders', JSON.stringify(reminders));
+        } else {
+            window.medicineReminders = JSON.stringify(reminders);
+        }
+        
+        showNotification('🗑️ Reminder deleted successfully');
+        loadExistingReminders(person, medicineName);
+        
+        return true;
+    } catch (error) {
+        console.error('Error deleting reminder:', error);
+        showNotification('⚠️ Error deleting reminder', 'error');
+        return false;
+    }
+}
+
+function scheduleNotification(reminder) {
+    const reminderTime = new Date(`${reminder.date}T${reminder.time}`);
+    const now = new Date();
+    const timeUntilReminder = reminderTime.getTime() - now.getTime();
+    
+    if (timeUntilReminder > 0) {
+        setTimeout(() => {
+            showReminderNotification(reminder);
+            
+            // Handle recurring reminders
+            if (reminder.repeat !== 'once') {
+                scheduleRecurringReminder(reminder);
+            }
+        }, timeUntilReminder);
+    }
+}
+
+function scheduleRecurringReminder(reminder) {
+    const nextDate = calculateNextReminderDate(reminder.date, reminder.repeat);
+    const newReminder = {
+        ...reminder,
+        id: Date.now(),
+        date: nextDate
+    };
+    
+    saveReminder(newReminder);
+    scheduleNotification(newReminder);
+}
+
+function calculateNextReminderDate(currentDate, repeat) {
+    const date = new Date(currentDate);
+    
+    switch (repeat) {
+        case 'daily':
+            date.setDate(date.getDate() + 1);
+            break;
+        case 'weekly':
+            date.setDate(date.getDate() + 7);
+            break;
+        case 'monthly':
+            date.setMonth(date.getMonth() + 1);
+            break;
+    }
+    
+    return date.toISOString().split('T')[0];
+}
+
+function showReminderNotification(reminder) {
+    const message = `💊 Medicine Reminder: ${reminder.medicineName}${reminder.message ? '\n' + reminder.message : ''}`;
+    
+    // Show in-app notification
+    showNotification(message);
+    
+    // Try to show browser notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Medicine Reminder', {
+            body: `Time to take ${reminder.medicineName}${reminder.message ? '\n' + reminder.message : ''}`,
+            icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzQ2OTJFNSI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iNSIgZmlsbD0iIzFGQzc0MSIvPjwvc3ZnPg==',
+            tag: `medicine-${reminder.id}`
+        });
+    }
+    
+    // Play notification sound if available
+    if (window.AudioContext || window.webkitAudioContext) {
+        playNotificationSound();
+    }
+}
+
+function playNotificationSound() {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (error) {
+        console.error('Error playing notification sound:', error);
+    }
+}
+
+function closeCalendarModal() {
+    const modal = document.getElementById('calendarModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+    });
+}
+
+// Initialize reminders when app starts - add this to the initApp() function
+function initializeReminders() {
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                showNotification('🔔 Notifications enabled! You will receive medicine reminders.');
+            }
+        });
+    }
+    
+    // Load and schedule existing reminders
+    const reminders = loadReminders();
+    const activeReminders = reminders.filter(r => 
+        r.active && 
+        new Date(`${r.date}T${r.time}`) > new Date()
+    );
+    
+    activeReminders.forEach(reminder => {
+        scheduleNotification(reminder);
+    });
+    
+    console.log(`Scheduled ${activeReminders.length} active reminders`);
+}
 
     function resetAllStock() {
         if (confirm('Are you sure you want to reset all medicine stock to original levels? This action cannot be undone.')) {
