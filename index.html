@@ -1082,6 +1082,7 @@ function setReminder(person, medicineName) {
 }
 
 
+// Replace the addToCalendar function with this simplified version
 function addToCalendar(reminder) {
     try {
         const startDate = new Date(`${reminder.date}T${reminder.time}`);
@@ -1092,131 +1093,19 @@ function addToCalendar(reminder) {
         const description = `Time to take ${reminder.medicineName}${reminder.message ? '\n\nNote: ' + reminder.message : ''}`;
         
         if (isMobile()) {
-            // Try native mobile calendar first
-            tryNativeMobileCalendar(reminder, title, description, startDate, endDate);
+            showMobileCalendarOptions(reminder, title, description, startDate, endDate);
         } else {
-            // Desktop - show options
             showDesktopCalendarOptions(reminder, title, description, startDate, endDate);
         }
         
     } catch (error) {
         console.error('Error adding to calendar:', error);
-        // Fallback to ICS file
         createICSFile(reminder);
         showNotification('📁 Calendar file downloaded as backup', 'success');
     }
 }
 
-function tryNativeMobileCalendar(reminder, title, description, startDate, endDate) {
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isAndroid = /Android/.test(navigator.userAgent);
-    
-    // Format timestamps
-    const startTimestamp = Math.floor(startDate.getTime());
-    const endTimestamp = Math.floor(endDate.getTime());
-    
-    let calendarUrl = null;
-    
-    if (isIOS) {
-        // iOS Calendar URL scheme
-        calendarUrl = `calshow:${Math.floor(startTimestamp / 1000)}`;
-    } else if (isAndroid) {
-        // Android Calendar Intent
-        const intentData = {
-            action: 'android.intent.action.INSERT',
-            type: 'vnd.android.cursor.item/event',
-            extras: {
-                'title': title,
-                'description': description,
-                'beginTime': startTimestamp,
-                'endTime': endTimestamp,
-                'allDay': false
-            }
-        };
-        
-        // Try Android calendar intent URL
-        calendarUrl = `intent:#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.item/event;S.title=${encodeURIComponent(title)};S.description=${encodeURIComponent(description)};l.beginTime=${startTimestamp};l.endTime=${endTimestamp};B.allDay=false;end`;
-    }
-    
-    if (calendarUrl) {
-        // Try to open native calendar
-        const success = attemptNativeCalendarOpen(calendarUrl, reminder);
-        if (!success) {
-            // Fallback to mobile options
-            showMobileCalendarOptions(reminder, title, description, startDate, endDate);
-        }
-    } else {
-        // Fallback for other mobile browsers
-        showMobileCalendarOptions(reminder, title, description, startDate, endDate);
-    }
-}
-
-function attemptNativeCalendarOpen(calendarUrl, reminder) {
-    try {
-        // Create a temporary link
-        const link = document.createElement('a');
-        link.href = calendarUrl;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        
-        // Track if user leaves the page (indicates app opened)
-        let appOpened = false;
-        let timeoutId;
-        
-        const cleanup = () => {
-            if (link.parentNode) {
-                document.body.removeChild(link);
-            }
-            window.removeEventListener('blur', onBlur);
-            window.removeEventListener('focus', onFocus);
-            if (timeoutId) clearTimeout(timeoutId);
-        };
-        
-        const onBlur = () => {
-            appOpened = true;
-            setTimeout(() => {
-                if (appOpened) {
-                    showNotification('📱 Calendar app opened! Add the reminder if it didn\'t auto-populate.', 'success');
-                    cleanup();
-                }
-            }, 100);
-        };
-        
-        const onFocus = () => {
-            setTimeout(() => {
-                if (appOpened) {
-                    appOpened = false; // Reset if user comes back quickly
-                }
-            }, 100);
-        };
-        
-        // Set up event listeners
-        window.addEventListener('blur', onBlur);
-        window.addEventListener('focus', onFocus);
-        
-        // Set timeout for fallback
-        timeoutId = setTimeout(() => {
-            if (!appOpened) {
-                cleanup();
-                showMobileCalendarOptions(reminder, `💊 Medicine: ${reminder.medicineName}`, 
-                    `Time to take ${reminder.medicineName}${reminder.message ? '\n\nNote: ' + reminder.message : ''}`,
-                    new Date(`${reminder.date}T${reminder.time}`),
-                    new Date(`${reminder.date}T${reminder.time}`).getTime() + 15 * 60000
-                );
-            }
-        }, 2000);
-        
-        // Attempt to open the calendar app
-        link.click();
-        
-        return true; // Assume success, will fallback if needed
-        
-    } catch (error) {
-        console.error('Error opening native calendar:', error);
-        return false;
-    }
-}
-
+// Simplified mobile calendar options
 function showMobileCalendarOptions(reminder, title, description, startDate, endDate) {
     const modal = document.createElement('div');
     modal.style.cssText = `
@@ -1233,17 +1122,17 @@ function showMobileCalendarOptions(reminder, title, description, startDate, endD
             <p style="color: #6b7280; margin-bottom: 25px; font-size: 14px;">${reminder.medicineName} • ${formatDate(reminder.date)} at ${reminder.time}</p>
             
             <div style="display: flex; flex-direction: column; gap: 12px;">
-                <button onclick="openGoogleCalendarMobile('${reminder.id}')" 
+                <button onclick="openGoogleCalendarWeb(${JSON.stringify(reminder).replace(/"/g, '&quot;')})" 
                         style="background: linear-gradient(45deg, #4285f4, #34a853); color: white; border: none; padding: 16px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <span>🌐</span> Open Google Calendar
                 </button>
                 
-                <button onclick="downloadICSMobile('${reminder.id}')" 
+                <button onclick="createICSFile(${JSON.stringify(reminder).replace(/"/g, '&quot;')})" 
                         style="background: linear-gradient(45deg, #f59e0b, #d97706); color: white; border: none; padding: 16px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <span>📁</span> Download Calendar File
                 </button>
                 
-                <button onclick="copyCalendarDetailsMobile('${reminder.id}')" 
+                <button onclick="copyCalendarDetails(${JSON.stringify(reminder).replace(/"/g, '&quot;')})" 
                         style="background: linear-gradient(45deg, #8b5cf6, #7c3aed); color: white; border: none; padding: 16px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <span>📋</span> Copy Details
                 </button>
@@ -1254,18 +1143,98 @@ function showMobileCalendarOptions(reminder, title, description, startDate, endD
                 </button>
             </div>
             
-            <p style="color: #9ca3af; font-size: 12px; margin-top: 15px; line-height: 1.4;">
-                💡 Tip: Save to your phone's calendar app for the best reminder experience
-            </p>
+            <div style="background: #f8fafc; border-radius: 10px; padding: 15px; margin-top: 15px; border-left: 4px solid #3b82f6;">
+                <p style="color: #475569; font-size: 13px; margin: 0; line-height: 1.4; text-align: left;">
+                    <strong>💡 How to add to your phone's calendar:</strong><br>
+                    1. Download the calendar file<br>
+                    2. Open it from your Downloads folder<br>
+                    3. It will open in your default calendar app<br>
+                    4. Tap "Add" or "Save" to confirm
+                </p>
+            </div>
         </div>
     `;
     
     document.body.appendChild(modal);
-    
-    // Store modal reference for cleanup
     window.currentCalendarModal = modal;
 }
 
+// Simplified copy function
+function copyCalendarDetails(reminder) {
+    const details = `Medicine Reminder: ${reminder.medicineName}
+Date: ${formatDate(reminder.date)}
+Time: ${reminder.time}
+${reminder.message ? 'Note: ' + reminder.message : ''}
+${reminder.repeat !== 'once' ? 'Repeat: ' + reminder.repeat : ''}`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(details).then(() => {
+            showNotification('📋 Details copied! Paste in your calendar app.', 'success');
+            closeMobileModal();
+        }).catch(() => {
+            fallbackCopyText(details);
+        });
+    } else {
+        fallbackCopyText(details);
+    }
+}
+
+// Enhanced ICS file creation for better mobile compatibility
+function createICSFile(reminder) {
+    const startDate = new Date(`${reminder.date}T${reminder.time}`);
+    const endDate = new Date(startDate.getTime() + 15 * 60000);
+    
+    const formatDateForICS = (date) => {
+        return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    };
+    
+    const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Medicine Tracker//Medicine Reminder//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:${Date.now()}@medicinetracker.app
+DTSTART:${formatDateForICS(startDate)}
+DTEND:${formatDateForICS(endDate)}
+SUMMARY:💊 Medicine: ${reminder.medicineName}
+DESCRIPTION:Time to take ${reminder.medicineName}${reminder.message ? '\\n\\nNote: ' + reminder.message : ''}
+LOCATION:Home
+STATUS:CONFIRMED
+SEQUENCE:0
+TRANSP:OPAQUE
+BEGIN:VALARM
+TRIGGER:-PT15M
+DESCRIPTION:Medicine reminder in 15 minutes
+ACTION:DISPLAY
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT5M
+DESCRIPTION:Medicine reminder in 5 minutes
+ACTION:DISPLAY
+END:VALARM
+BEGIN:VALARM
+TRIGGER:PT0S
+DESCRIPTION:Time to take your medicine!
+ACTION:DISPLAY
+END:VALARM
+END:VEVENT
+END:VCALENDAR`;
+    
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `medicine-reminder-${reminder.medicineName.replace(/\s+/g, '-')}-${reminder.date}.ics`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    showNotification('📁 Calendar file downloaded! Open it to add to your calendar app.', 'success');
+    closeMobileModal();
+}
 function showDesktopCalendarOptions(reminder, title, description, startDate, endDate) {
     const modal = document.createElement('div');
     modal.style.cssText = `
@@ -1301,69 +1270,6 @@ function showDesktopCalendarOptions(reminder, title, description, startDate, end
     document.body.appendChild(modal);
     window.currentCalendarModal = modal;
 }
-
-// Helper functions for the modal buttons
-function openGoogleCalendarMobile(reminderId) {
-    const reminders = loadReminders();
-    const reminder = reminders.find(r => r.id == reminderId);
-    if (reminder) {
-        openGoogleCalendarWeb(reminder);
-    }
-    closeMobileModal();
-}
-
-function downloadICSMobile(reminderId) {
-    const reminders = loadReminders();
-    const reminder = reminders.find(r => r.id == reminderId);
-    if (reminder) {
-        createICSFile(reminder);
-        showNotification('📁 Calendar file downloaded! Check your downloads folder.', 'success');
-    }
-    closeMobileModal();
-}
-
-function copyCalendarDetailsMobile(reminderId) {
-    const reminders = loadReminders();
-    const reminder = reminders.find(r => r.id == reminderId);
-    
-    if (reminder) {
-        const details = `Medicine Reminder: ${reminder.medicineName}
-Date: ${formatDate(reminder.date)}
-Time: ${reminder.time}
-${reminder.message ? 'Note: ' + reminder.message : ''}
-${reminder.repeat !== 'once' ? 'Repeat: ' + reminder.repeat : ''}`;
-
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(details).then(() => {
-                showNotification('📋 Details copied! Paste in your calendar app.', 'success');
-            }).catch(() => {
-                fallbackCopyText(details);
-            });
-        } else {
-            fallbackCopyText(details);
-        }
-    }
-    closeMobileModal();
-}
-
-function downloadICSDesktop(reminderId) {
-    const reminders = loadReminders();
-    const reminder = reminders.find(r => r.id == reminderId);
-    if (reminder) {
-        createICSFile(reminder);
-    }
-    closeMobileModal();
-}
-
-function openGoogleCalendarDesktop(reminderId) {
-    const reminders = loadReminders();
-    const reminder = reminders.find(r => r.id == reminderId);
-    if (reminder) {
-        openGoogleCalendarWeb(reminder);
-    }
-    closeMobileModal();
-}
-
 function openGoogleCalendarWeb(reminder) {
     const startDate = new Date(`${reminder.date}T${reminder.time}`);
     const endDate = new Date(startDate.getTime() + 15 * 60000);
