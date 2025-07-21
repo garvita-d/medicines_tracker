@@ -1270,11 +1270,9 @@ async function processVoiceCommand(command) {
             if (taken) {
                 // Reduce stock count
                 reduceMedicineStock(storageKey);
-                speak("Dose marked as taken. Stock updated.");
             } else {
                 // Increase stock count back
                 increaseMedicineStock(storageKey);
-                speak("Dose unmarked. Stock restored.");
             }
             
             // Refresh displays
@@ -1343,12 +1341,10 @@ async function processVoiceCommand(command) {
                             const alertDiv = document.createElement('div');
                             
                             let alertClass = 'alert';
-                            let alertIcon = '⚠️';
                             let alertTitle = 'Low Stock Warning';
                             
                             if (medicine.stock <= 2) {
                                 alertClass += ' urgent-alert';
-                                alertIcon = '🚨';
                                 alertTitle = 'URGENT: Critical Stock';
                             }
                             
