@@ -1224,6 +1224,7 @@ async function processVoiceCommand(command) {
                 if (!medicine.storageKey) {
                     medicine.storageKey = `${person}_${elementId}_${index}_${medicine.name.replace(/\s+/g, '_')}`;
         }
+                const medicineDiv = document.createElement('div');
                 const isTakenToday = wasTakenToday(medicine.storageKey);
                 const isLowStock = medicine.stock <= 5;
                 
