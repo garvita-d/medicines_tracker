@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -43,22 +44,6 @@
         .header p {
             font-size: 1.1rem;
             opacity: 0.9;
-        }
-
-        /* Mobile responsiveness */
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1.8rem;
-            }
-            
-            .container {
-                margin: 10px;
-                padding: 0;
-            }
-            
-            body {
-                padding: 10px;
-            }
         }
 
         /* Notification Setup Panel */
@@ -212,7 +197,6 @@
             display: flex;
             background: #f8f9fa;
             border-bottom: 2px solid #e9ecef;
-            overflow-x: auto;
         }
 
         .nav-tab {
@@ -225,8 +209,6 @@
             font-weight: 600;
             color: #6c757d;
             transition: all 0.3s ease;
-            white-space: nowrap;
-            min-width: 120px;
         }
 
         .nav-tab.active {
@@ -247,12 +229,6 @@
 
         .tab-content.active {
             display: block;
-        }
-
-        @media (max-width: 768px) {
-            .tab-content {
-                padding: 15px;
-            }
         }
 
         .person-section {
@@ -287,18 +263,6 @@
             font-size: 1.8rem;
             font-weight: bold;
             color: #333;
-        }
-
-        @media (max-width: 768px) {
-            .person-name {
-                font-size: 1.4rem;
-            }
-            
-            .person-icon {
-                width: 50px;
-                height: 50px;
-                font-size: 1.2rem;
-            }
         }
 
         .time-section {
@@ -347,14 +311,6 @@
             background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
         }
 
-        @media (max-width: 768px) {
-            .medicine-item {
-                flex-direction: column;
-                align-items: flex-start;
-                text-align: left;
-            }
-        }
-
         .medicine-info {
             flex: 1;
         }
@@ -374,18 +330,6 @@
         .medicine-stock {
             text-align: right;
             margin-left: 15px;
-        }
-
-        @media (max-width: 768px) {
-            .medicine-stock {
-                text-align: left;
-                margin-left: 0;
-                margin-top: 10px;
-                display: flex;
-                align-items: center;
-                gap: 15px;
-                width: 100%;
-            }
         }
 
         .stock-count {
@@ -408,13 +352,6 @@
             display: flex;
             gap: 5px;
             margin-top: 10px;
-        }
-
-        @media (max-width: 768px) {
-            .control-buttons {
-                flex-wrap: wrap;
-                width: 100%;
-            }
         }
 
         .btn {
@@ -446,36 +383,6 @@
             transform: scale(1.05);
         }
 
-        /* Dose taken checkbox styles */
-        .dose-checkbox-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .dose-checkbox {
-            width: 18px;
-            height: 18px;
-            accent-color: #28a745;
-        }
-
-        .dose-checkbox-label {
-            font-size: 0.85rem;
-            color: #495057;
-            cursor: pointer;
-        }
-
-        .dose-taken {
-            background: #d4edda !important;
-            border-color: #28a745 !important;
-        }
-
-        .dose-taken .medicine-name {
-            text-decoration: line-through;
-            color: #6c757d;
-        }
-
         .alert {
             background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
             border: 1px solid #f5c6cb;
@@ -491,39 +398,6 @@
         .alert-icon {
             font-size: 1.5rem;
             margin-right: 15px;
-        }
-
-        /* Fixed scrollable stock alerts for mobile */
-        .stock-alerts-container {
-            max-height: 70vh;
-            overflow-y: auto;
-            padding-right: 10px;
-        }
-
-        @media (max-width: 768px) {
-            .stock-alerts-container {
-                max-height: 60vh;
-                -webkit-overflow-scrolling: touch;
-            }
-        }
-
-        /* Scrollbar styling */
-        .stock-alerts-container::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .stock-alerts-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-
-        .stock-alerts-container::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 10px;
-        }
-
-        .stock-alerts-container::-webkit-scrollbar-thumb:hover {
-            background: #555;
         }
 
         .current-time {
@@ -584,20 +458,6 @@
             transform: translateX(0);
         }
 
-        @media (max-width: 768px) {
-            .notification-popup {
-                top: 10px;
-                right: 10px;
-                left: 10px;
-                max-width: none;
-                transform: translateY(-200px);
-            }
-            
-            .notification-popup.show {
-                transform: translateY(0);
-            }
-        }
-
         .notification-popup .close-btn {
             position: absolute;
             top: 10px;
@@ -607,33 +467,6 @@
             color: white;
             font-size: 1.5rem;
             cursor: pointer;
-        }
-
-        /* Low stock warning styles */
-        .low-stock-warning {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 15px;
-            text-align: center;
-            animation: pulse 2s infinite;
-            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
-        }
-
-        .reset-button {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            margin: 5px;
-        }
-
-        .reset-button:hover {
-            background: #5a6268;
         }
     </style>
 </head>
@@ -658,15 +491,6 @@
             </div>
         </div>
 
-        <!-- Low Stock Warning Banner -->
-        <div id="lowStockWarning" class="low-stock-warning" style="display: none;">
-            <h3>⚠️ LOW STOCK ALERT!</h3>
-            <p id="lowStockMessage"></p>
-            <button onclick="checkLowStockAlerts()" class="btn" style="background: white; color: #ff6b6b; margin-top: 10px;">
-                📊 View Stock Details
-            </button>
-        </div>
-
         <!-- Notification Setup Section -->
         <div class="notification-setup">
             <h3>🔔 Smart Notification System</h3>
@@ -684,9 +508,6 @@
                 </button>
                 <button class="setup-button" onclick="setupEmailReminders()">
                     📧 Email Reminders
-                </button>
-                <button class="reset-button" onclick="resetAllData()">
-                    🔄 Reset All Data
                 </button>
             </div>
             
@@ -720,9 +541,9 @@
 
         <div class="nav-tabs">
             <button class="nav-tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
-            <button class="nav-tab" onclick="showTab('father')">👨 Father</button>
-            <button class="nav-tab" onclick="showTab('mother')">👩 Mother</button>
-            <button class="nav-tab" onclick="showTab('alerts')">⚠️ Alerts</button>
+            <button class="nav-tab" onclick="showTab('father')">👨 Father's Medicines</button>
+            <button class="nav-tab" onclick="showTab('mother')">👩 Mother's Medicines</button>
+            <button class="nav-tab" onclick="showTab('alerts')">⚠️ Stock Alerts</button>
         </div>
 
         <div id="dashboard" class="tab-content active">
@@ -747,7 +568,7 @@
                 <div class="time-section">
                     <div class="time-header">
                         <span class="time-icon">🌅</span>
-                        Before Breakfast (Morning - 8:00 AM)
+                        Before Breakfast (Morning)
                     </div>
                     <div id="fatherMorningBefore"></div>
                 </div>
@@ -755,7 +576,7 @@
                 <div class="time-section">
                     <div class="time-header">
                         <span class="time-icon">🍳</span>
-                        After Breakfast (10:00 AM)
+                        After Breakfast
                     </div>
                     <div id="fatherMorningAfter"></div>
                 </div>
@@ -763,7 +584,7 @@
                 <div class="time-section">
                     <div class="time-header">
                         <span class="time-icon">🕐</span>
-                        Afternoon (4:00 PM)
+                        4 PM
                     </div>
                     <div id="father4PM"></div>
                 </div>
@@ -771,7 +592,7 @@
                 <div class="time-section">
                     <div class="time-header">
                         <span class="time-icon">🍽️</span>
-                        After Dinner (10:00 PM)
+                        After Dinner
                     </div>
                     <div id="fatherNight"></div>
                 </div>
@@ -788,7 +609,7 @@
                 <div class="time-section">
                     <div class="time-header">
                         <span class="time-icon">🍳</span>
-                        After Breakfast (10:00 AM)
+                        After Breakfast
                     </div>
                     <div id="motherMorning"></div>
                 </div>
@@ -796,7 +617,7 @@
                 <div class="time-section">
                     <div class="time-header">
                         <span class="time-icon">🍽️</span>
-                        After Dinner (10:00 PM)
+                        After Dinner
                     </div>
                     <div id="motherNight"></div>
                 </div>
@@ -805,9 +626,7 @@
 
         <div id="alerts" class="tab-content">
             <h2 style="margin-bottom: 20px; color: #333;">🚨 Stock Alerts & Warnings</h2>
-            <div class="stock-alerts-container">
-                <div id="stockAlerts"></div>
-            </div>
+            <div id="stockAlerts"></div>
         </div>
     </div>
 
@@ -826,17 +645,8 @@
         let notificationPermission = Notification.permission;
         let reminderIntervals = [];
 
-        // Storage key for persistent data
-        const STORAGE_KEY = 'medicineData';
-        const DOSES_TAKEN_KEY = 'dosesTakenToday';
-
-        // Get today's date string for dose tracking
-        function getTodayDateString() {
-            return new Date().toISOString().split('T')[0];
-        }
-
-        // Default medicine data - only used for initialization
-        const defaultMedicineData = {
+        // Medicine data structure - FIXED with proper structure
+        const medicineData = {
             father: {
                 morningBefore: [
                     { name: "Maxi PhD", dosage: "30 days tablets", stock: 30, originalStock: 30 }
@@ -869,388 +679,498 @@
             }
         };
 
-        // Load or initialize medicine data
-        function loadMedicineData() {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                try {
-                    return JSON.parse(saved);
-                } catch (e) {
-                    console.error('Error loading saved data, using default:', e);
-                    return JSON.parse(JSON.stringify(defaultMedicineData));
-                }
-            }
-            return JSON.parse(JSON.stringify(defaultMedicineData));
+        // Medicine reminder times (24-hour format)
+        const reminderTimes = [
+            { time: '08:00', message: "Time for Father's morning medicine (before breakfast) - Maxi PhD" },
+            { time: '10:00', message: "Time for after-breakfast medicines for Father and Mother (including Cinod and Zavamet)" },
+            { time: '16:00', message: "Time for Father's 4 PM medicine (Acitrom)" },
+            { time: '22:00', message: "Time for evening medicines for both parents (including Cinod and Zavamet for Mother)" }
+        ];
+
+        // Initialize the application
+        function init() {
+            console.log("Initializing MediBot system...");
+            
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+            
+            // Setup PWA installation
+            setupPWA();
+            
+            // Setup reminder system
+            setupReminderSystem();
+            
+            // Update next reminder display
+            updateNextReminder();
+            setInterval(updateNextReminder, 60000);
+            
+            // Initialize voice if available
+            initializeVoiceRecognition();
+            
+            // Populate medicine schedules
+            console.log("Populating medicine schedules...");
+            populateMedicineSchedules();
+            
+            // Generate stock alerts
+            generateStockAlerts();
+            
+            // Auto-greet user
+            setTimeout(() => {
+                speak("Welcome to MediBot! All medicine schedules loaded successfully.");
+            }, 2000);
         }
 
-        // Save medicine data
-        function saveMedicineData() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(medicineData));
-            } catch (e) {
-                console.error('Error saving data:', e);
-            }
+        // Populate medicine schedules in the UI
+        function populateMedicineSchedules() {
+            console.log("Starting to populate medicine schedules...");
+            console.log("Medicine data:", medicineData);
+            
+            // Father's medicines
+            console.log("Populating father's medicines...");
+            populateTimeSection('fatherMorningBefore', medicineData.father.morningBefore, 'father', 'morningBefore');
+            populateTimeSection('fatherMorningAfter', medicineData.father.morningAfter, 'father', 'morningAfter');
+            populateTimeSection('father4PM', medicineData.father.afternoon, 'father', 'afternoon');
+            populateTimeSection('fatherNight', medicineData.father.night, 'father', 'night');
+            
+            // Mother's medicines
+            console.log("Populating mother's medicines...");
+            populateTimeSection('motherMorning', medicineData.mother.morning, 'mother', 'morning');
+            populateTimeSection('motherNight', medicineData.mother.night, 'mother', 'night');
+            
+            console.log("Medicine schedules populated successfully!");
         }
 
-        // Load doses taken today
-        function loadDosesTakenToday() {
-            const today = getTodayDateString();
-            const saved = localStorage.getItem(DOSES_TAKEN_KEY);
-            if (saved) {
-                try {
-                    const allDoses = JSON.parse(saved);
-                    return allDoses[today] || {};
-                } catch (e) {
-                    return {};
-                }
-            }
-            return {};
-        }
-
-        // Save doses taken today
-        function saveDosesTakenToday(dosesTaken) {
-            const today = getTodayDateString();
-            try {
-                const saved = localStorage.getItem(DOSES_TAKEN_KEY);
-                const allDoses = saved ? JSON.parse(saved) : {};
-                allDoses[today] = dosesTaken;
-                localStorage.setItem(DOSES_TAKEN_KEY, JSON.stringify(allDoses));
-            } catch (e) {
-                console.error('Error saving doses taken:', e);
-            }
-        }
-
-        // Initialize medicine data and doses taken
-        let medicineData = loadMedicineData();
-        let dosesTakenToday = loadDosesTakenToday();
-
-        // Voice Recognition variables
-        let recognition = null;
-        let isListening = false;
-        let speechSynthesis = window.speechSynthesis;
-
-        // Check browser support
-        function checkBrowserSupport() {
-            const features = {
-                notifications: 'Notification' in window,
-                speechRecognition: 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window,
-                speechSynthesis: 'speechSynthesis' in window
-            };
-            return features;
-        }
-
-        // PWA Installation
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('installButton').style.display = 'block';
-        });
-
-        function installPWA() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the A2HS prompt');
-                    }
-                    deferredPrompt = null;
-                });
-            } else {
-                alert('Add to Home Screen: Use your browser menu to add this app to your home screen!');
-            }
-        }
-
-        // Notification Functions
-        function updateNotificationStatus() {
-            const statusDiv = document.getElementById('notificationStatus');
-            if (Notification.permission === 'granted') {
-                statusDiv.className = 'notification-status status-granted';
-                statusDiv.textContent = '✅ Notifications enabled! You\'ll get medicine reminders.';
-            } else if (Notification.permission === 'denied') {
-                statusDiv.className = 'notification-status status-denied';
-                statusDiv.textContent = '❌ Notifications blocked. Please enable in browser settings.';
-            } else {
-                statusDiv.className = 'notification-status status-pending';
-                statusDiv.textContent = '⏳ Click "Enable Browser Notifications" to get started!';
-            }
-        }
-
-        function enableBrowserNotifications() {
-            if (!('Notification' in window)) {
-                alert('This browser does not support notifications');
+        // Populate a specific time section with medicines
+        function populateTimeSection(sectionId, medicines, person, timeSlot) {
+            console.log(`Populating section: ${sectionId}, person: ${person}, timeSlot: ${timeSlot}`);
+            console.log("Medicines:", medicines);
+            
+            const section = document.getElementById(sectionId);
+            if (!section) {
+                console.error(`Section element not found: ${sectionId}`);
                 return;
             }
-
-            Notification.requestPermission().then(permission => {
-                updateNotificationStatus();
-                if (permission === 'granted') {
-                    showCustomNotification('Success!', 'Notifications are now enabled. You\'ll get medicine reminders.');
-                    setupAutomaticReminders();
-                }
+            
+            if (!medicines || medicines.length === 0) {
+                console.log(`No medicines found for ${sectionId}`);
+                section.innerHTML = '<p style="color: #6c757d; font-style: italic;">No medicines scheduled for this time.</p>';
+                return;
+            }
+            
+            section.innerHTML = '';
+            
+            medicines.forEach((medicine, index) => {
+                console.log(`Creating medicine element for: ${medicine.name} (index: ${index})`);
+                const medicineElement = createMedicineElement(medicine, person, timeSlot, index);
+                section.appendChild(medicineElement);
             });
-        }
-
-        function showCustomNotification(title, message, urgent = false) {
-            const popup = document.getElementById('notificationPopup');
-            const content = document.getElementById('notificationContent');
             
-            content.innerHTML = `
-                <h4>🔔 ${title}</h4>
-                <p>${message}</p>
-            `;
+            console.log(`Section ${sectionId} populated with ${medicines.length} medicines`);
+        }
+
+        // Create a medicine element
+        function createMedicineElement(medicine, person, timeSlot, index) {
+            const div = document.createElement('div');
+            div.className = `medicine-item ${medicine.stock <= 5 ? 'low-stock' : ''}`;
             
-            if (urgent) {
-                popup.classList.add('urgent-alert');
-            }
+            // Create unique IDs for this medicine
+            const uniqueId = `${person}-${timeSlot}-${index}`;
             
-            popup.classList.add('show');
-            
-            // Auto close after 10 seconds
-            setTimeout(() => {
-                closeNotification();
-            }, 10000);
-
-            // Also try browser notification
-            if (Notification.permission === 'granted') {
-                new Notification(title, {
-                    body: message,
-                    icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTYiIGZpbGw9IiM2NjdlZWEiLz4KPHR2ZSB4PSIxNiIgeT0iMTYiIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+'
-                });
-            }
-        }
-
-        function closeNotification() {
-            const popup = document.getElementById('notificationPopup');
-            popup.classList.remove('show', 'urgent-alert');
-        }
-
-        // Medicine Management Functions
-        function takeMedicine(person, timeSlot, index) {
-            const medicine = medicineData[person][timeSlot][index];
-            if (medicine.stock > 0) {
-                medicine.stock--;
-                saveMedicineData();
-                
-                // Mark dose as taken
-                const doseKey = `${person}_${timeSlot}_${index}`;
-                dosesTakenToday[doseKey] = true;
-                saveDosesTakenToday(dosesTakenToday);
-                
-                renderMedicineSchedule();
-                checkStockAlerts();
-                
-                speak(`${medicine.name} taken. ${medicine.stock} tablets remaining.`);
-                
-                if (medicine.stock <= 5) {
-                    showCustomNotification('Low Stock Warning!', `${medicine.name} is running low. Only ${medicine.stock} left!`, true);
-                }
-            }
-        }
-
-        function addStock(person, timeSlot, index, amount = 30) {
-            medicineData[person][timeSlot][index].stock += amount;
-            saveMedicineData();
-            renderMedicineSchedule();
-            checkStockAlerts();
-            
-            const medicine = medicineData[person][timeSlot][index];
-            speak(`Added ${amount} tablets to ${medicine.name}. Total: ${medicine.stock}.`);
-        }
-
-        function isDoseTaken(person, timeSlot, index) {
-            const doseKey = `${person}_${timeSlot}_${index}`;
-            return dosesTakenToday[doseKey] || false;
-        }
-
-        function toggleDose(person, timeSlot, index, checkbox) {
-            const doseKey = `${person}_${timeSlot}_${index}`;
-            if (checkbox.checked) {
-                dosesTakenToday[doseKey] = true;
-                takeMedicine(person, timeSlot, index);
-            } else {
-                delete dosesTakenToday[doseKey];
-                saveDosesTakenToday(dosesTakenToday);
-                renderMedicineSchedule();
-            }
-        }
-
-        function renderMedicineItem(medicine, person, timeSlot, index) {
-            const isLowStock = medicine.stock <= 5;
-            const doseTaken = isDoseTaken(person, timeSlot, index);
-            
-            return `
-                <div class="medicine-item ${isLowStock ? 'low-stock' : ''} ${doseTaken ? 'dose-taken' : ''}">
-                    <div class="medicine-info">
-                        <div class="medicine-name">${medicine.name}</div>
-                        <div class="medicine-details">${medicine.dosage}</div>
-                        <div class="dose-checkbox-container">
-                            <input type="checkbox" class="dose-checkbox" 
-                                   ${doseTaken ? 'checked' : ''} 
-                                   onchange="toggleDose('${person}', '${timeSlot}', ${index}, this)"
-                                   id="dose_${person}_${timeSlot}_${index}">
-                            <label class="dose-checkbox-label" for="dose_${person}_${timeSlot}_${index}">
-                                Dose taken today
-                            </label>
-                        </div>
-                    </div>
-                    <div class="medicine-stock">
-                        <div class="stock-count ${isLowStock ? 'low' : ''}">${medicine.stock}</div>
-                        <div class="stock-label">tablets left</div>
-                        <div class="control-buttons">
-                            <button class="btn btn-take" onclick="takeMedicine('${person}', '${timeSlot}', ${index})" ${doseTaken ? 'disabled' : ''}>
-                                💊 Take
-                            </button>
-                            <button class="btn btn-add" onclick="addStock('${person}', '${timeSlot}', ${index})">
-                                ➕ Add 30
-                            </button>
-                        </div>
+            div.innerHTML = `
+                <div class="medicine-info">
+                    <div class="medicine-name">${medicine.name}</div>
+                    <div class="medicine-details">${medicine.dosage}</div>
+                    <div class="control-buttons">
+                        <button class="btn btn-take" onclick="takeMedicine('${medicine.name}', '${person}', '${timeSlot}', ${index})">
+                            ✓ Take Dose
+                        </button>
+                        <button class="btn btn-add" onclick="addMedicineStock('${medicine.name}', '${person}', '${timeSlot}', ${index})">
+                            + Add Stock
+                        </button>
                     </div>
                 </div>
+                <div class="medicine-stock">
+                    <div class="stock-count ${medicine.stock <= 5 ? 'low' : ''}" id="stock-${uniqueId}">
+                        ${medicine.stock}
+                    </div>
+                    <div class="stock-label">doses left</div>
+                </div>
             `;
+            
+            return div;
         }
 
-        function renderMedicineSchedule() {
-            // Father's medicine
-            document.getElementById('fatherMorningBefore').innerHTML = 
-                medicineData.father.morningBefore.map((med, idx) => 
-                    renderMedicineItem(med, 'father', 'morningBefore', idx)).join('');
+        // Generate stock alerts
+        function generateStockAlerts() {
+            const alertsContainer = document.getElementById('stockAlerts');
+            if (!alertsContainer) return;
             
-            document.getElementById('fatherMorningAfter').innerHTML = 
-                medicineData.father.morningAfter.map((med, idx) => 
-                    renderMedicineItem(med, 'father', 'morningAfter', idx)).join('');
+            alertsContainer.innerHTML = '';
             
-            document.getElementById('father4PM').innerHTML = 
-                medicineData.father.afternoon.map((med, idx) => 
-                    renderMedicineItem(med, 'father', 'afternoon', idx)).join('');
+            let hasAlerts = false;
             
-            document.getElementById('fatherNight').innerHTML = 
-                medicineData.father.night.map((med, idx) => 
-                    renderMedicineItem(med, 'father', 'night', idx)).join('');
-
-            // Mother's medicine
-            document.getElementById('motherMorning').innerHTML = 
-                medicineData.mother.morning.map((med, idx) => 
-                    renderMedicineItem(med, 'mother', 'morning', idx)).join('');
-            
-            document.getElementById('motherNight').innerHTML = 
-                medicineData.mother.night.map((med, idx) => 
-                    renderMedicineItem(med, 'mother', 'night', idx)).join('');
-        }
-
-        // Stock Alert Functions
-        function checkStockAlerts() {
-            const alertsDiv = document.getElementById('stockAlerts');
-            const warningDiv = document.getElementById('lowStockWarning');
-            const warningMessage = document.getElementById('lowStockMessage');
-            
-            let alerts = [];
-            let lowStockCount = 0;
-
             // Check all medicines for low stock
             Object.keys(medicineData).forEach(person => {
                 Object.keys(medicineData[person]).forEach(timeSlot => {
-                    medicineData[person][timeSlot].forEach((medicine, index) => {
+                    medicineData[person][timeSlot].forEach(medicine => {
                         if (medicine.stock <= 5) {
-                            lowStockCount++;
-                            alerts.push({
-                                person: person.charAt(0).toUpperCase() + person.slice(1),
-                                medicine: medicine.name,
-                                stock: medicine.stock,
-                                timeSlot: timeSlot,
-                                urgent: medicine.stock <= 2
-                            });
+                            hasAlerts = true;
+                            const alertDiv = document.createElement('div');
+                            alertDiv.className = 'alert urgent-alert';
+                            alertDiv.innerHTML = `
+                                <span class="alert-icon">⚠️</span>
+                                <div>
+                                    <strong>LOW STOCK ALERT:</strong> ${medicine.name} 
+                                    (${person.charAt(0).toUpperCase() + person.slice(1)}) 
+                                    has only ${medicine.stock} doses remaining!
+                                    <br><small>Please order more soon to avoid running out.</small>
+                                </div>
+                            `;
+                            alertsContainer.appendChild(alertDiv);
                         }
                     });
                 });
             });
-
-            // Update warning banner
-            if (lowStockCount > 0) {
-                warningDiv.style.display = 'block';
-                warningMessage.textContent = `${lowStockCount} medicine${lowStockCount > 1 ? 's' : ''} running low!`;
-            } else {
-                warningDiv.style.display = 'none';
-            }
-
-            // Update alerts tab
-            if (alerts.length > 0) {
-                alertsDiv.innerHTML = alerts.map(alert => `
-                    <div class="alert ${alert.urgent ? 'urgent-alert' : ''}">
-                        <span class="alert-icon">${alert.urgent ? '🚨' : '⚠️'}</span>
-                        <div>
-                            <strong>${alert.person}'s ${alert.medicine}</strong><br>
-                            Only ${alert.stock} tablet${alert.stock !== 1 ? 's' : ''} left!
-                            ${alert.urgent ? '<br><span style="color: #dc3545; font-weight: bold;">URGENT: Restock needed!</span>' : ''}
-                        </div>
-                    </div>
-                `).join('');
-            } else {
-                alertsDiv.innerHTML = `
-                    <div class="alert" style="background: #d4edda; border-color: #c3e6cb; color: #155724;">
+            
+            if (!hasAlerts) {
+                alertsContainer.innerHTML = `
+                    <div class="alert" style="background: linear-gradient(135deg, #d1f2eb 0%, #a3e4d7 100%); color: #0c5460; border-color: #17a2b8;">
                         <span class="alert-icon">✅</span>
                         <div>
-                            <strong>All Good!</strong><br>
-                            All medicines are well stocked.
+                            <strong>All Good!</strong> All medicines have adequate stock levels.
+                            <br><small>Keep monitoring stock levels for timely refills.</small>
                         </div>
-                    </div>
+                        </div>
                 `;
             }
         }
 
-        function checkLowStockAlerts() {
-            showTab('alerts');
+        // Take medicine function
+        function takeMedicine(medicineName, person, timeSlot, index) {
+            console.log(`Taking medicine: ${medicineName} for ${person} at ${timeSlot}, index: ${index}`);
+            
+            // Find and update the medicine stock
+            const medicine = medicineData[person][timeSlot][index];
+            if (medicine && medicine.stock > 0) {
+                medicine.stock--;
+                
+                // Update the display
+                const uniqueId = `${person}-${timeSlot}-${index}`;
+                const stockElement = document.getElementById(`stock-${uniqueId}`);
+                if (stockElement) {
+                    stockElement.textContent = medicine.stock;
+                    stockElement.className = `stock-count ${medicine.stock <= 5 ? 'low' : ''}`;
+                }
+                
+                // Update the medicine item styling if low stock
+                const medicineElement = stockElement.closest('.medicine-item');
+                if (medicine.stock <= 5) {
+                    medicineElement.classList.add('low-stock');
+                } else {
+                    medicineElement.classList.remove('low-stock');
+                }
+                
+                // Show notification
+                showNotification(`✅ ${medicineName} taken! ${medicine.stock} doses remaining.`);
+                speak(`${medicineName} dose recorded. ${medicine.stock} doses remaining.`);
+                
+                // Regenerate stock alerts
+                generateStockAlerts();
+            } else {
+                showNotification(`⚠️ No stock remaining for ${medicineName}!`);
+                speak(`Warning: No stock remaining for ${medicineName}. Please refill immediately.`);
+            }
         }
 
-        // Voice Recognition Functions
-        function initializeVoiceRecognition() {
-            if ('webkitSpeechRecognition' in window) {
-                recognition = new webkitSpeechRecognition();
-            } else if ('SpeechRecognition' in window) {
-                recognition = new SpeechRecognition();
+        // Add medicine stock function
+        function addMedicineStock(medicineName, person, timeSlot, index) {
+            const amount = prompt(`How many doses of ${medicineName} would you like to add?`, '30');
+            if (amount && !isNaN(amount) && parseInt(amount) > 0) {
+                const addAmount = parseInt(amount);
+                const medicine = medicineData[person][timeSlot][index];
+                
+                if (medicine) {
+                    medicine.stock += addAmount;
+                    
+                    // Update the display
+                    const uniqueId = `${person}-${timeSlot}-${index}`;
+                    const stockElement = document.getElementById(`stock-${uniqueId}`);
+                    if (stockElement) {
+                        stockElement.textContent = medicine.stock;
+                        stockElement.className = `stock-count ${medicine.stock <= 5 ? 'low' : ''}`;
+                    }
+                    
+                    // Remove low stock styling if stock is now adequate
+                    const medicineElement = stockElement.closest('.medicine-item');
+                    if (medicine.stock > 5) {
+                        medicineElement.classList.remove('low-stock');
+                    }
+                    
+                    showNotification(`✅ Added ${addAmount} doses to ${medicineName}. Total: ${medicine.stock} doses.`);
+                    speak(`Added ${addAmount} doses to ${medicineName}. Total stock is now ${medicine.stock} doses.`);
+                    
+                    // Regenerate stock alerts
+                    generateStockAlerts();
+                }
+            }
+        }
+
+        // PWA Setup
+        function setupPWA() {
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                document.getElementById('installButton').style.display = 'inline-block';
+            });
+
+            window.addEventListener('appinstalled', () => {
+                console.log('PWA was installed');
+                deferredPrompt = null;
+                document.getElementById('installButton').style.display = 'none';
+                showNotification('App installed successfully! You can now use it offline.');
+            });
+        }
+
+        // Install PWA
+        async function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to the install prompt: ${outcome}`);
+                deferredPrompt = null;
+                document.getElementById('installButton').style.display = 'none';
             } else {
-                document.getElementById('voiceStatus').textContent = 'Voice recognition not supported in this browser';
+                showNotification('To install: Use browser menu → "Add to Home screen" or "Install app"');
+            }
+        }
+
+        // Notification functions
+        function enableBrowserNotifications() {
+            if (!("Notification" in window)) {
+                alert("This browser does not support notifications");
                 return;
             }
 
-            recognition.continuous = false;
-            recognition.interimResults = true;
-            recognition.lang = 'en-US';
-
-            recognition.onstart = () => {
-                isListening = true;
-                document.getElementById('voiceButton').classList.add('listening');
-                document.getElementById('voiceStatus').textContent = 'Listening... Speak now!';
-                document.getElementById('voiceTranscript').textContent = 'Listening...';
-            };
-
-            recognition.onresult = (event) => {
-                let transcript = '';
-                for (let i = 0; i < event.results.length; i++) {
-                    transcript += event.results[i][0].transcript;
+            Notification.requestPermission().then(permission => {
+                notificationPermission = permission;
+                updateNotificationStatus();
+                if (permission === 'granted') {
+                    showNotification('Notifications enabled! You will receive medicine reminders.');
+                    setupReminderSystem();
                 }
-                
-                document.getElementById('voiceTranscript').textContent = transcript;
-                
-                if (event.results[event.results.length - 1].isFinal) {
-                    processVoiceCommand(transcript.toLowerCase());
-                }
-            };
+            });
+        }
 
-            recognition.onerror = (event) => {
-                document.getElementById('voiceStatus').textContent = `Error: ${event.error}`;
-                stopListening();
-            };
+        function updateNotificationStatus() {
+            const statusElement = document.getElementById('notificationStatus');
+            if (notificationPermission === 'granted') {
+                statusElement.innerHTML = '✅ Notifications enabled! Reminders will appear automatically.';
+                statusElement.className = 'notification-status status-granted';
+            } else if (notificationPermission === 'denied') {
+                statusElement.innerHTML = '❌ Notifications blocked. Please enable in browser settings.';
+                statusElement.className = 'notification-status status-denied';
+            } else {
+                statusElement.innerHTML = '⏳ Click "Enable Browser Notifications" to get started!';
+                statusElement.className = 'notification-status status-pending';
+            }
+        }
 
-            recognition.onend = () => {
-                stopListening();
-            };
+        function setupWebReminders() {
+            clearAllReminders();
+            reminderTimes.forEach(reminder => {
+                const [hour, minute] = reminder.time.split(':').map(Number);
+                scheduleReminder(hour, minute, reminder.message);
+            });
+            showNotification('Web reminders activated! Automatic alerts scheduled.');
+        }
+
+        function setupReminderSystem() {
+            setupWebReminders();
+            updateNotificationStatus();
+        }
+
+        function scheduleReminder(hour, minute, message) {
+            const now = new Date();
+            const reminderTime = new Date();
+            reminderTime.setHours(hour, minute, 0, 0);
+            
+            if (reminderTime <= now) {
+                reminderTime.setDate(reminderTime.getDate() + 1);
+            }
+            
+            const timeUntilReminder = reminderTime.getTime() - now.getTime();
+            
+            const intervalId = setTimeout(() => {
+                sendReminder(message);
+                scheduleReminder(hour, minute, message); // Reschedule for next day
+            }, timeUntilReminder);
+            
+            reminderIntervals.push(intervalId);
+        }
+
+        function sendReminder(message) {
+            // Browser notification
+            if (notificationPermission === 'granted') {
+                new Notification('🔔 Medicine Reminder', {
+                    body: message,
+                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50" font-size="50">💊</text></svg>',
+                    badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50" font-size="50">🔔</text></svg>',
+                    requireInteraction: true
+                });
+            }
+            
+            // Custom popup notification
+            showCustomNotification(message);
+            
+            // Voice announcement
+            speak(message);
+            
+            // Log the reminder
+            console.log('Reminder sent:', message);
+        }
+
+        function showCustomNotification(message) {
+            const popup = document.getElementById('notificationPopup');
+            const content = document.getElementById('notificationContent');
+            
+            content.innerHTML = `
+                <h4>🔔 Medicine Reminder</h4>
+                <p>${message}</p>
+                <div style="margin-top: 10px;">
+                    <button onclick="closeNotification()" style="background: white; color: #667eea; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer;">
+                        Got it!
+                    </button>
+                </div>
+            `;
+            
+            popup.classList.add('show');
+            
+            // Auto-close after 30 seconds
+            setTimeout(() => {
+                closeNotification();
+            }, 30000);
+        }
+
+        function closeNotification() {
+            document.getElementById('notificationPopup').classList.remove('show');
+        }
+
+        function clearAllReminders() {
+            reminderIntervals.forEach(clearTimeout);
+            reminderIntervals = [];
+        }
+
+        function showNotification(message) {
+            showCustomNotification(message);
+        }
+
+        // Calendar and Email functions
+        function downloadCalendar() {
+            const events = [];
+            reminderTimes.forEach(reminder => {
+                const eventText = `BEGIN:VEVENT
+DTSTART:${getTodayDateString()}T${reminder.time.replace(':', '')}00
+DTEND:${getTodayDateString()}T${getEndTime(reminder.time)}00
+RRULE:FREQ=DAILY
+SUMMARY:Medicine Reminder
+DESCRIPTION:${reminder.message}
+END:VEVENT`;
+                events.push(eventText);
+            });
+            
+            const calendar = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//MediBot//Medicine Reminders//EN
+${events.join('\n')}
+END:VCALENDAR`;
+            
+            const blob = new Blob([calendar], { type: 'text/calendar' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'medicine-reminders.ics';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Calendar file downloaded! Import it to your calendar app.');
+        }
+
+        function getTodayDateString() {
+            return new Date().toISOString().split('T')[0].replace(/-/g, '');
+        }
+
+        function getEndTime(startTime) {
+            const [hour, minute] = startTime.split(':').map(Number);
+            const endHour = String(hour).padStart(2, '0');
+            const endMinute = String(minute + 15).padStart(2, '0');
+            return `${endHour}${endMinute}`;
+        }
+
+        function setupEmailReminders() {
+            const subject = encodeURIComponent('Medicine Reminder Schedule');
+            const body = encodeURIComponent(`Medicine Reminder Times:
+
+${reminderTimes.map(r => `${r.time} - ${r.message}`).join('\n')}
+
+Set up your email client to send you daily reminders at these times.`);
+            
+            window.open(`mailto:?subject=${subject}&body=${body}`);
+            showNotification('Email template opened! Send yourself reminders.');
+        }
+
+        // Voice Recognition
+        let recognition;
+        let isListening = false;
+        let speechSynthesis = window.speechSynthesis;
+
+        function initializeVoiceRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                
+                recognition.continuous = false;
+                recognition.interimResults = true;
+                recognition.lang = 'en-US';
+                
+                recognition.onstart = function() {
+                    console.log('Voice recognition started');
+                    document.getElementById('voiceStatus').textContent = '🎤 Listening...';
+                    document.getElementById('voiceButton').classList.add('listening');
+                    isListening = true;
+                };
+                
+                recognition.onresult = function(event) {
+                    let transcript = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        transcript += event.results[i][0].transcript;
+                    }
+                    
+                    document.getElementById('voiceTranscript').textContent = transcript;
+                    
+                    if (event.results[event.results.length - 1].isFinal) {
+                        processVoiceCommand(transcript);
+                    }
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error('Voice recognition error:', event.error);
+                    document.getElementById('voiceStatus').textContent = `❌ Error: ${event.error}`;
+                    resetVoiceButton();
+                };
+                
+                recognition.onend = function() {
+                    console.log('Voice recognition ended');
+                    resetVoiceButton();
+                };
+            } else {
+                document.getElementById('voiceStatus').textContent = '❌ Voice recognition not supported';
+                document.getElementById('voiceButton').disabled = true;
+            }
         }
 
         function toggleVoiceRecognition() {
-            if (!recognition) {
-                initializeVoiceRecognition();
-            }
-
             if (isListening) {
                 recognition.stop();
             } else {
@@ -1258,175 +1178,144 @@
             }
         }
 
-        function stopListening() {
-            isListening = false;
-            document.getElementById('voiceButton').classList.remove('listening');
+        function resetVoiceButton() {
             document.getElementById('voiceStatus').textContent = 'Click microphone to start listening';
+            document.getElementById('voiceButton').classList.remove('listening');
+            isListening = false;
         }
 
-        function processVoiceCommand(command) {
+        function processVoiceCommand(transcript) {
+            console.log('Processing command:', transcript);
+            const command = transcript.toLowerCase();
+            
             let response = '';
-            const responseDiv = document.getElementById('voiceResponse');
-
-            // Medicine taking commands
-            if (command.includes('take') || command.includes('took')) {
-                if (command.includes('father')) {
-                    response = handleMedicineCommand(command, 'father');
-                } else if (command.includes('mother')) {
-                    response = handleMedicineCommand(command, 'mother');
-                } else {
-                    response = 'Please specify if this is for father or mother.';
-                }
+            
+            // Medicine-related commands
+            if (command.includes('stock') || command.includes('how many')) {
+                response = getStockInfo(command);
+            } else if (command.includes('take') || command.includes('taken')) {
+                response = processTakeCommand(command);
+            } else if (command.includes('remind') || command.includes('reminder')) {
+                response = getNextReminder();
+            } else if (command.includes('low stock') || command.includes('alert')) {
+                response = getLowStockAlert();
+            } else if (command.includes('schedule') || command.includes('medicine time')) {
+                response = getMedicineSchedule();
+            } else if (command.includes('help')) {
+                response = getHelpInformation();
+            } else {
+                response = "I didn't understand that command. Try asking about stock levels, reminders, or say 'help' for available commands.";
             }
-            // Stock checking commands
-            else if (command.includes('stock') || command.includes('how many')) {
-                response = checkMedicineStock(command);
-            }
-            // Status commands
-            else if (command.includes('status') || command.includes('summary')) {
-                response = getMedicineStatus();
-            }
-            // Low stock alerts
-            else if (command.includes('low stock') || command.includes('running low')) {
-                response = getLowStockReport();
-            }
-            // Time-based commands
-            else if (command.includes('morning') || command.includes('evening') || command.includes('night')) {
-                response = getTimeBasedMedicine(command);
-            }
-            // General help
-            else if (command.includes('help')) {
-                response = getHelpMessage();
-            }
-            else {
-                response = `I heard: "${command}". Try commands like "take father's morning medicine" or "check stock status".`;
-            }
-
-            responseDiv.textContent = response;
+            
+            document.getElementById('voiceResponse').textContent = response;
             speak(response);
         }
 
-        function handleMedicineCommand(command, person) {
-            if (command.includes('morning') && command.includes('before')) {
-                return takeMedicineByTime(person, 'morningBefore', 'before breakfast');
-            } else if (command.includes('morning') || command.includes('breakfast')) {
-                return takeMedicineByTime(person, 'morningAfter', 'after breakfast');
-            } else if (command.includes('afternoon') || command.includes('4') || command.includes('four')) {
-                return takeMedicineByTime(person, 'afternoon', 'afternoon');
-            } else if (command.includes('night') || command.includes('evening') || command.includes('dinner')) {
-                return takeMedicineByTime(person, 'night', 'after dinner');
-            } else {
-                return `Please specify the time: morning, afternoon, or night for ${person}.`;
-            }
-        }
-
-        function takeMedicineByTime(person, timeSlot, timeDescription) {
-            const medicines = medicineData[person][timeSlot];
-            let response = `Taking ${person}'s ${timeDescription} medicines:\n`;
+        function getStockInfo(command) {
+            let response = '';
+            let foundMedicine = false;
             
-            medicines.forEach((medicine, index) => {
-                const doseKey = `${person}_${timeSlot}_${index}`;
-                if (!dosesTakenToday[doseKey] && medicine.stock > 0) {
-                    medicine.stock--;
-                    dosesTakenToday[doseKey] = true;
-                    response += `✓ ${medicine.name} - ${medicine.stock} left\n`;
-                } else if (dosesTakenToday[doseKey]) {
-                    response += `⚠ ${medicine.name} already taken today\n`;
-                } else {
-                    response += `❌ ${medicine.name} - out of stock!\n`;
-                }
-            });
-            
-            saveMedicineData();
-            saveDosesTakenToday(dosesTakenToday);
-            renderMedicineSchedule();
-            checkStockAlerts();
-            
-            return response;
-        }
-
-        function checkMedicineStock(command) {
-            let response = 'Medicine Stock Report:\n\n';
-            
-            ['father', 'mother'].forEach(person => {
-                response += `${person.charAt(0).toUpperCase() + person.slice(1)}:\n`;
+            // Search for specific medicine mentioned
+            Object.keys(medicineData).forEach(person => {
                 Object.keys(medicineData[person]).forEach(timeSlot => {
                     medicineData[person][timeSlot].forEach(medicine => {
-                        response += `• ${medicine.name}: ${medicine.stock} tablets\n`;
-                    });
-                });
-                response += '\n';
-            });
-            
-            return response;
-        }
-
-        function getMedicineStatus() {
-            let totalMedicines = 0;
-            let lowStockCount = 0;
-            let takenToday = Object.keys(dosesTakenToday).length;
-            
-            ['father', 'mother'].forEach(person => {
-                Object.keys(medicineData[person]).forEach(timeSlot => {
-                    medicineData[person][timeSlot].forEach(medicine => {
-                        totalMedicines++;
-                        if (medicine.stock <= 5) lowStockCount++;
-                    });
-                });
-            });
-            
-            return `Medicine Status: ${takenToday} doses taken today. ${lowStockCount} medicines running low out of ${totalMedicines} total.`;
-        }
-
-        function getLowStockReport() {
-            let lowStockMeds = [];
-            
-            ['father', 'mother'].forEach(person => {
-                Object.keys(medicineData[person]).forEach(timeSlot => {
-                    medicineData[person][timeSlot].forEach(medicine => {
-                        if (medicine.stock <= 5) {
-                            lowStockMeds.push(`${medicine.name}: ${medicine.stock} left`);
+                        if (command.includes(medicine.name.toLowerCase())) {
+                            response += `${medicine.name} has ${medicine.stock} doses remaining. `;
+                            foundMedicine = true;
                         }
                     });
                 });
             });
             
-            if (lowStockMeds.length === 0) {
-                return 'All medicines are well stocked!';
-            } else {
-                return `Low stock alert! ${lowStockMeds.join(', ')}`;
+            if (!foundMedicine) {
+                // General stock overview
+                response = 'Stock overview: ';
+                let lowStockCount = 0;
+                
+                Object.keys(medicineData).forEach(person => {
+                    Object.keys(medicineData[person]).forEach(timeSlot => {
+                        medicineData[person][timeSlot].forEach(medicine => {
+                            if (medicine.stock <= 5) {
+                                response += `${medicine.name} is low with ${medicine.stock} doses. `;
+                                lowStockCount++;
+                            }
+                        });
+                    });
+                });
+                
+                if (lowStockCount === 0) {
+                    response += 'All medicines have adequate stock levels.';
+                }
             }
+            
+            return response || 'No stock information found.';
         }
 
-        function getTimeBasedMedicine(command) {
-            const currentHour = new Date().getHours();
-            let timeSlot = '';
-            
-            if (command.includes('morning') || currentHour < 12) {
-                timeSlot = 'morning';
-            } else if (command.includes('afternoon') || (currentHour >= 12 && currentHour < 18)) {
-                timeSlot = 'afternoon';
-            } else {
-                timeSlot = 'evening/night';
-            }
-            
-            return `Current time medicines for ${timeSlot}. Use "take father's ${timeSlot} medicine" or "take mother's ${timeSlot} medicine" to record doses.`;
+        function processTakeCommand(command) {
+            // This would need more sophisticated parsing to identify specific medicines
+            return "Please use the take dose buttons in the medicine schedule for accurate tracking.";
         }
 
-        function getHelpMessage() {
-            return `Voice commands available:
-            • "Take father's morning medicine"
-            • "Take mother's evening medicine"  
-            • "Check stock status"
-            • "Show low stock medicines"
-            • "Medicine summary"
+        function getNextReminder() {
+            const now = new Date();
+            const currentTime = now.getHours() * 60 + now.getMinutes();
             
-            You can also specify times like breakfast, afternoon, or dinner.`;
+            let nextReminder = null;
+            let minDiff = Infinity;
+            
+            reminderTimes.forEach(reminder => {
+                const [hour, minute] = reminder.time.split(':').map(Number);
+                const reminderTime = hour * 60 + minute;
+                
+                let diff = reminderTime - currentTime;
+                if (diff < 0) diff += 24 * 60; // Next day
+                
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    nextReminder = reminder;
+                }
+            });
+            
+            if (nextReminder) {
+                const hours = Math.floor(minDiff / 60);
+                const minutes = minDiff % 60;
+                return `Next reminder is at ${nextReminder.time} (in ${hours} hours and ${minutes} minutes): ${nextReminder.message}`;
+            }
+            
+            return 'No upcoming reminders found.';
+        }
+
+        function getLowStockAlert() {
+            let alerts = [];
+            
+            Object.keys(medicineData).forEach(person => {
+                Object.keys(medicineData[person]).forEach(timeSlot => {
+                    medicineData[person][timeSlot].forEach(medicine => {
+                        if (medicine.stock <= 5) {
+                            alerts.push(`${medicine.name} has only ${medicine.stock} doses left`);
+                        }
+                    });
+                });
+            });
+            
+            if (alerts.length === 0) {
+                return 'All medicines have adequate stock levels.';
+            }
+            
+            return `Low stock alerts: ${alerts.join('. ')}. Please reorder soon.`;
+        }
+
+        function getMedicineSchedule() {
+            return `Medicine schedule: Morning before breakfast at 8 AM, after breakfast at 10 AM, afternoon at 4 PM, and evening after dinner at 10 PM. Check the medicine tabs for detailed schedules.`;
+        }
+
+        function getHelpInformation() {
+            return `Available voice commands: Ask about stock levels, say 'take medicine' for instructions, ask for reminders, request low stock alerts, or ask about the schedule. You can also say specific medicine names to get their stock information.`;
         }
 
         function speak(text) {
-            if (speechSynthesis) {
-                speechSynthesis.cancel(); // Stop any ongoing speech
+            if (speechSynthesis && text) {
+                speechSynthesis.cancel(); // Cancel any ongoing speech
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.rate = 0.9;
                 utterance.pitch = 1;
@@ -1441,162 +1330,7 @@
             }
         }
 
-        // Reminder System
-        function setupAutomaticReminders() {
-            // Clear existing reminders
-            reminderIntervals.forEach(interval => clearInterval(interval));
-            reminderIntervals = [];
-
-            if (Notification.permission !== 'granted') return;
-
-            // Set up reminders for different times
-            const reminderTimes = [
-                { hour: 8, minute: 0, message: 'Time for Father\'s morning medicine (before breakfast)!' },
-                { hour: 10, minute: 0, message: 'Time for morning medicines after breakfast!' },
-                { hour: 16, minute: 0, message: 'Time for Father\'s afternoon medicine!' },
-                { hour: 22, minute: 0, message: 'Time for evening medicines after dinner!' }
-            ];
-
-            reminderTimes.forEach(reminder => {
-                const interval = setInterval(() => {
-                    const now = new Date();
-                    if (now.getHours() === reminder.hour && now.getMinutes() === reminder.minute) {
-                        showCustomNotification('Medicine Reminder', reminder.message, true);
-                    }
-                }, 60000); // Check every minute
-                
-                reminderIntervals.push(interval);
-            });
-        }
-
-        function setupWebReminders() {
-            if (Notification.permission === 'granted') {
-                setupAutomaticReminders();
-                showCustomNotification('Web Reminders Active!', 'You\'ll get automatic reminders at medicine times.');
-            } else {
-                alert('Please enable notifications first!');
-            }
-        }
-
-        function downloadCalendar() {
-            const events = [];
-            const today = new Date();
-            
-            // Generate 30 days of events
-            for (let i = 0; i < 30; i++) {
-                const date = new Date(today);
-                date.setDate(today.getDate() + i);
-                const dateStr = date.toISOString().split('T')[0].replace(/-/g, '');
-                
-                events.push(
-                    `BEGIN:VEVENT`,
-                    `DTSTART:${dateStr}T080000`,
-                    `DTEND:${dateStr}T081500`,
-                    `SUMMARY:Father's Morning Medicine (Before Breakfast)`,
-                    `DESCRIPTION:Maxi PhD`,
-                    `END:VEVENT`
-                );
-                
-                events.push(
-                    `BEGIN:VEVENT`,
-                    `DTSTART:${dateStr}T100000`,
-                    `DTEND:${dateStr}T101500`,
-                    `SUMMARY:Morning Medicine (After Breakfast)`,
-                    `DESCRIPTION:Father: Metolol MF, Pilclop, Cordarone, Orofer XT, Hyqvit\\nMother: Telzox H, Cinod, Zavamet`,
-                    `END:VEVENT`
-                );
-                
-                events.push(
-                    `BEGIN:VEVENT`,
-                    `DTSTART:${dateStr}T160000`,
-                    `DTEND:${dateStr}T161500`,
-                    `SUMMARY:Father's Afternoon Medicine`,
-                    `DESCRIPTION:Acitrom`,
-                    `END:VEVENT`
-                );
-                
-                events.push(
-                    `BEGIN:VEVENT`,
-                    `DTSTART:${dateStr}T220000`,
-                    `DTEND:${dateStr}T221500`,
-                    `SUMMARY:Evening Medicine (After Dinner)`,
-                    `DESCRIPTION:Father: Rotin F, Telmiford\\nMother: Cinod, Zavamet`,
-                    `END:VEVENT`
-                );
-            }
-            
-            const icsContent = [
-                'BEGIN:VCALENDAR',
-                'VERSION:2.0',
-                'PRODID:-//Medicine Reminder//EN',
-                ...events,
-                'END:VCALENDAR'
-            ].join('\n');
-            
-            const blob = new Blob([icsContent], { type: 'text/calendar' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'medicine-reminders.ics';
-            a.click();
-            URL.revokeObjectURL(url);
-            
-            showCustomNotification('Calendar Downloaded!', 'Import the .ics file to your calendar app for reminders.');
-        }
-
-        function setupEmailReminders() {
-            const subject = 'Medicine Reminder Schedule';
-            const body = `
-Daily Medicine Schedule:
-
-FATHER:
-🌅 8:00 AM (Before Breakfast): Maxi PhD
-🍳 10:00 AM (After Breakfast): Metolol MF, Pilclop, Cordarone, Orofer XT, Hyqvit
-🕐 4:00 PM: Acitrom
-🍽️ 10:00 PM (After Dinner): Rotin F, Telmiford
-
-MOTHER:
-🍳 10:00 AM (After Breakfast): Telzox H, Cinod, Zavamet  
-🍽️ 10:00 PM (After Dinner): Cinod, Zavamet
-
-Set up recurring reminders in your email or phone for these times!
-            `.trim();
-            
-            const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            window.open(mailtoLink);
-        }
-
-        function resetAllData() {
-            if (confirm('Are you sure you want to reset all medicine data and doses taken? This cannot be undone.')) {
-                localStorage.removeItem(STORAGE_KEY);
-                localStorage.removeItem(DOSES_TAKEN_KEY);
-                medicineData = JSON.parse(JSON.stringify(defaultMedicineData));
-                dosesTakenToday = {};
-                renderMedicineSchedule();
-                checkStockAlerts();
-                showCustomNotification('Data Reset', 'All medicine data has been reset to defaults.');
-            }
-        }
-
-        // UI Functions
-        function showTab(tabName) {
-            // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Remove active class from all nav tabs
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Show selected tab content
-            document.getElementById(tabName).classList.add('active');
-            
-            // Add active class to corresponding nav tab
-            event.target.classList.add('active');
-        }
-
+        // Time and reminder functions
         function updateCurrentTime() {
             const now = new Date();
             const timeString = now.toLocaleString('en-US', {
@@ -1609,380 +1343,72 @@ Set up recurring reminders in your email or phone for these times!
                 second: '2-digit'
             });
             
-            document.getElementById('currentTime').textContent = `Current Time: ${timeString}`;
-            
-            // Update next reminder time
-            updateNextReminderDisplay();
+            const element = document.getElementById('currentTime');
+            if (element) {
+                element.textContent = `Current Time: ${timeString}`;
+            }
         }
 
-        function updateNextReminderDisplay() {
+        function updateNextReminder() {
             const now = new Date();
-            const currentHour = now.getHours();
-            const currentMinute = now.getMinutes();
-            
-            const reminderTimes = [
-                { hour: 8, minute: 0, label: 'Father\'s morning medicine (8:00 AM)' },
-                { hour: 10, minute: 0, label: 'Morning medicines (10:00 AM)' },
-                { hour: 16, minute: 0, label: 'Father\'s afternoon medicine (4:00 PM)' },
-                { hour: 22, minute: 0, label: 'Evening medicines (10:00 PM)' }
-            ];
+            const currentTime = now.getHours() * 60 + now.getMinutes();
             
             let nextReminder = null;
+            let minDiff = Infinity;
             
-            for (let reminder of reminderTimes) {
-                if (currentHour < reminder.hour || (currentHour === reminder.hour && currentMinute < reminder.minute)) {
+            reminderTimes.forEach(reminder => {
+                const [hour, minute] = reminder.time.split(':').map(Number);
+                const reminderTime = hour * 60 + minute;
+                
+                let diff = reminderTime - currentTime;
+                if (diff < 0) diff += 24 * 60; // Next day
+                
+                if (diff < minDiff) {
+                    minDiff = diff;
                     nextReminder = reminder;
-                    break;
                 }
-            }
+            });
             
-            // If no reminder today, show tomorrow's first reminder
-            if (!nextReminder) {
-                nextReminder = { ...reminderTimes[0], label: reminderTimes[0].label + ' (tomorrow)' };
+            const element = document.getElementById('nextReminderTime');
+            if (element && nextReminder) {
+                const hours = Math.floor(minDiff / 60);
+                const minutes = minDiff % 60;
+                element.textContent = `${nextReminder.time} (in ${hours}h ${minutes}m)`;
             }
-            
-            const nextTime = `${nextReminder.hour.toString().padStart(2, '0')}:${nextReminder.minute.toString().padStart(2, '0')}`;
-            document.getElementById('nextReminderTime').textContent = `${nextReminder.label}`;
         }
 
-        // Initialize the application
-        function initializeApp() {
-            // Check browser support
-            const support = checkBrowserSupport();
+        // Tab switching
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
             
-            // Update notification status
-            updateNotificationStatus();
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
             
-            // Initialize voice recognition
-            if (support.speechRecognition) {
-                initializeVoiceRecognition();
-            } else {
-                document.getElementById('voiceStatus').textContent = 'Voice recognition not supported';
-                document.getElementById('voiceButton').disabled = true;
-                }
-            
-            // Render initial medicine schedule
-            renderMedicineSchedule();
-            
-            // Check for stock alerts
-            checkStockAlerts();
-            
-            // Set up automatic time updates
-            setInterval(updateCurrentTime, 1000);
-            updateCurrentTime();
-            
-            // Set up automatic reminders if notifications are enabled
-            if (Notification.permission === 'granted') {
-                setupAutomaticReminders();
+            // Show selected tab content
+            const selectedContent = document.getElementById(tabName);
+            if (selectedContent) {
+                selectedContent.classList.add('active');
             }
             
-            // Show first tab by default
-            showTab('schedule');
-            
-            console.log('Medicine Tracker App initialized successfully');
+            // Add active class to clicked tab
+            event.target.classList.add('active');
         }
 
-        // Global variables for reminders
-        let reminderIntervals = [];
-        let deferredPrompt;
-
-        // Start the application when DOM is loaded
-        document.addEventListener('DOMContentLoaded', initializeApp);
-
-        // Service Worker Registration for PWA
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', init);
+        
+        // Service Worker for PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
-                    .then(registration => {
-                        console.log('SW registered: ', registration);
-                    })
-                    .catch(registrationError => {
-                        console.log('SW registration failed: ', registrationError);
-                    });
+                    .then(registration => console.log('SW registered'))
+                    .catch(error => console.log('SW registration failed'));
             });
         }
+    </script>
 
-        // Handle offline functionality
-        window.addEventListener('online', () => {
-            showCustomNotification('Connection Restored', 'You are back online!');
-        });
-
-        window.addEventListener('offline', () => {
-            showCustomNotification('Offline Mode', 'App is working offline. Data will sync when connection is restored.');
-        });
-
-        // Auto-save data periodically
-        setInterval(() => {
-            saveMedicineData();
-            saveDosesTakenToday(dosesTakenToday);
-        }, 30000); // Save every 30 seconds
-
-        // Handle page visibility changes for better battery management
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                // Page is hidden, reduce activity
-                stopSpeaking();
-                if (isListening) {
-                    recognition.stop();
-                }
-            } else {
-                // Page is visible again
-                updateCurrentTime();
-                checkStockAlerts();
-            }
-        });
-
-        // Export data function for backup
-        function exportData() {
-            const exportData = {
-                medicineData: medicineData,
-                dosesTaken: loadAllDosesTaken(),
-                exportDate: new Date().toISOString(),
-                version: '1.0'
-            };
-            
-            const dataStr = JSON.stringify(exportData, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `medicine-data-backup-${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            
-            URL.revokeObjectURL(url);
-            showCustomNotification('Data Exported', 'Your medicine data has been downloaded as a backup file.');
-        }
-
-        // Import data function
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const importedData = JSON.parse(e.target.result);
-                    
-                    if (importedData.medicineData && importedData.version) {
-                        if (confirm('This will replace your current medicine data. Are you sure?')) {
-                            medicineData = importedData.medicineData;
-                            
-                            // Import historical doses if available
-                            if (importedData.dosesTaken) {
-                                Object.keys(importedData.dosesTaken).forEach(date => {
-                                    const saved = localStorage.getItem(DOSES_TAKEN_KEY);
-                                    const allDoses = saved ? JSON.parse(saved) : {};
-                                    allDoses[date] = importedData.dosesTaken[date];
-                                    localStorage.setItem(DOSES_TAKEN_KEY, JSON.stringify(allDoses));
-                                });
-                            }
-                            
-                            saveMedicineData();
-                            renderMedicineSchedule();
-                            checkStockAlerts();
-                            
-                            showCustomNotification('Data Imported', 'Your medicine data has been successfully imported.');
-                        }
-                    } else {
-                        throw new Error('Invalid data format');
-                    }
-                } catch (error) {
-                    alert('Error importing data: Invalid file format');
-                    console.error('Import error:', error);
-                }
-            };
-            reader.readAsText(file);
-            
-            // Reset file input
-            event.target.value = '';
-        }
-
-        // Function to load all historical doses taken
-        function loadAllDosesTaken() {
-            try {
-                const saved = localStorage.getItem(DOSES_TAKEN_KEY);
-                return saved ? JSON.parse(saved) : {};
-            } catch (e) {
-                console.error('Error loading historical doses:', e);
-                return {};
-            }
-        }
-
-        // Generate weekly report
-        function generateWeeklyReport() {
-            const today = new Date();
-            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-            const allDoses = loadAllDosesTaken();
-            
-            let report = 'Weekly Medicine Report\n';
-            report += `From ${weekAgo.toLocaleDateString()} to ${today.toLocaleDateString()}\n\n`;
-            
-            const weekDates = [];
-            for (let i = 0; i < 7; i++) {
-                const date = new Date(weekAgo.getTime() + i * 24 * 60 * 60 * 1000);
-                weekDates.push(date.toISOString().split('T')[0]);
-            }
-            
-            ['father', 'mother'].forEach(person => {
-                report += `${person.toUpperCase()}:\n`;
-                let totalDoses = 0;
-                let takenDoses = 0;
-                
-                Object.keys(medicineData[person]).forEach(timeSlot => {
-                    medicineData[person][timeSlot].forEach((medicine, index) => {
-                        weekDates.forEach(date => {
-                            totalDoses++;
-                            const doseKey = `${person}_${timeSlot}_${index}`;
-                            if (allDoses[date] && allDoses[date][doseKey]) {
-                                takenDoses++;
-                            }
-                        });
-                    });
-                });
-                
-                const adherenceRate = totalDoses > 0 ? ((takenDoses / totalDoses) * 100).toFixed(1) : '0';
-                report += `Adherence Rate: ${adherenceRate}% (${takenDoses}/${totalDoses} doses)\n\n`;
-            });
-            
-            // Create and download report
-            const blob = new Blob([report], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `medicine-weekly-report-${today.toISOString().split('T')[0]}.txt`;
-            a.click();
-            URL.revokeObjectURL(url);
-            
-            showCustomNotification('Weekly Report Generated', 'Your weekly medicine adherence report has been downloaded.');
-        }
-
-        // Advanced voice commands for power users
-        function processAdvancedVoiceCommand(command) {
-            if (command.includes('weekly report') || command.includes('adherence report')) {
-                generateWeeklyReport();
-                return 'Generating weekly adherence report...';
-            } else if (command.includes('export data') || command.includes('backup data')) {
-                exportData();
-                return 'Exporting medicine data for backup...';
-            } else if (command.includes('reset today') || command.includes('clear today')) {
-                if (confirm('Reset all doses taken today?')) {
-                    dosesTakenToday = {};
-                    saveDosesTakenToday(dosesTakenToday);
-                    renderMedicineSchedule();
-                    return 'All doses for today have been reset.';
-                }
-                return 'Reset cancelled.';
-            }
-            
-            return null; // Command not recognized as advanced
-        }
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (event) => {
-            // Ctrl/Cmd + M for microphone
-            if ((event.ctrlKey || event.metaKey) && event.key === 'm') {
-                event.preventDefault();
-                toggleVoiceRecognition();
-            }
-            
-            // Escape to stop speaking/listening
-            if (event.key === 'Escape') {
-                stopSpeaking();
-                if (isListening) {
-                    recognition.stop();
-                }
-            }
-            
-            // Ctrl/Cmd + S to stop speaking
-            if ((event.ctrlKey || event.metaKey) && event.key === 's') {
-                event.preventDefault();
-                stopSpeaking();
-            }
-        });
-
-        // Touch gestures for mobile
-        let touchStartY = 0;
-        let touchEndY = 0;
-
-        document.addEventListener('touchstart', (event) => {
-            touchStartY = event.changedTouches[0].screenY;
-        });
-
-        document.addEventListener('touchend', (event) => {
-            touchEndY = event.changedTouches[0].screenY;
-            handleSwipeGesture();
-        });
-
-        function handleSwipeGesture() {
-            const swipeThreshold = 100;
-            const swipeDistance = touchStartY - touchEndY;
-            
-            if (Math.abs(swipeDistance) > swipeThreshold) {
-                if (swipeDistance > 0) {
-                    // Swipe up - could trigger quick actions
-                    console.log('Swipe up detected');
-                } else {
-                    // Swipe down - could refresh or show status
-                    console.log('Swipe down detected');
-                    updateCurrentTime();
-                    checkStockAlerts();
-                }
-            }
-        }
-
-        // Error handling and recovery
-        window.addEventListener('error', (event) => {
-            console.error('Application error:', event.error);
-            showCustomNotification('Error Detected', 'An error occurred. The app will attempt to recover automatically.');
-            
-            // Attempt to recover by reinitializing critical components
-            setTimeout(() => {
-                try {
-                    renderMedicineSchedule();
-                    checkStockAlerts();
-                    updateCurrentTime();
-                } catch (e) {
-                    console.error('Recovery failed:', e);
-                }
-            }, 1000);
-        });
-
-        // Performance monitoring
-        let performanceMetrics = {
-            startTime: Date.now(),
-            renderCount: 0,
-            voiceCommands: 0
-        };
-
-        function trackPerformance(action) {
-            switch (action) {
-                case 'render':
-                    performanceMetrics.renderCount++;
-                    break;
-                case 'voice':
-                    performanceMetrics.voiceCommands++;
-                    break;
-            }
-        }
-
-        // Debug mode toggle (for development)
-        let debugMode = false;
-        function toggleDebugMode() {
-            debugMode = !debugMode;
-            console.log('Debug mode:', debugMode ? 'ON' : 'OFF');
-            
-            if (debugMode) {
-                console.log('Performance metrics:', performanceMetrics);
-                console.log('Current medicine data:', medicineData);
-                console.log('Doses taken today:', dosesTakenToday);
-            }
-        }
-
-        // Final app ready notification
-        setTimeout(() => {
-            if (Notification.permission === 'granted') {
-                showCustomNotification('Medicine Tracker Ready!', 'Your personal medicine assistant is now active.');
-            }
-        }, 2000);
-    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIk1lZGljaW5lIFJlbWluZGVyIFN5c3RlbSIsCiAgInNob3J0X25hbWUiOiAiTWVkaUJvdCIsCiAgImRlc2NyaXB0aW9uIjogIlZvaWNlLWFjdGl2YXRlZCBtZWRpY2luZSByZW1pbmRlciBhbmQgc3RvY2sgYWxlcnQgc3lzdGVtIiwKICAic3RhcnRfdXJsIjogIi8iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiM2NjdlZWEiLAogICJ0aGVtZV9jb2xvciI6ICIjNjY3ZWVhIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sLCUzY3N2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJTNlJTNjdGV4dCB5PScuOWVtJyBmb250LXNpemU9JzkwJTNlJUYwJTlGJTkyJThBJTNjL3RleHQlM2UlM2Mvc3ZnJTNlIiwKICAgICAgInNpemVzIjogIjE5MngxOTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9zdmcreG1sIgogICAgfQogIF0KfQ==">
