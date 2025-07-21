@@ -740,7 +740,7 @@
         let notificationPermission = Notification.permission;
         let reminderIntervals = [];
 
-        // Medicine data structure with persistent storage keys
+       // Medicine data structure with persistent storage keys - Modified for persistent stock
 let medicineData = loadMedicineData() || {
     father: {
         morningBefore: [
@@ -773,6 +773,7 @@ let medicineData = loadMedicineData() || {
         ]
     }
 };
+
 
 // Enhanced storage system for persistent medicine data
 let appStorage = {
