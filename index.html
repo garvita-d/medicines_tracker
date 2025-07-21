@@ -367,6 +367,28 @@
             background: linear-gradient(45deg, #EF4444, #DC2626);
         }
 
+        .storage-status {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.8);
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .storage-status.enabled {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .storage-status.disabled {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
         @media (max-width: 768px) {
             .container { padding: 15px; }
             .header h1 { font-size: 1.5rem; }
@@ -391,6 +413,10 @@
             <p>Never miss your medication again!</p>
             <div class="data-info" id="dataInfo">
                 Data persists across sessions • Last updated: <span id="lastUpdate">Never</span>
+            </div>
+            <div class="storage-status" id="storageStatus">
+                <span id="storageIcon">💾</span>
+                <span id="storageText">Checking storage...</span>
             </div>
         </div>
 
@@ -446,6 +472,40 @@
     <script>
         // Persistent storage key
         const STORAGE_KEY = 'medicine_tracker_data';
+        const STORAGE_VERSION = '2.0';
+        
+        // Check localStorage availability
+        let storageAvailable = false;
+        
+        function checkStorageAvailability() {
+            try {
+                const test = '__storage_test__';
+                localStorage.setItem(test, 'test');
+                localStorage.removeItem(test);
+                storageAvailable = true;
+                return true;
+            } catch(e) {
+                storageAvailable = false;
+                console.warn('localStorage is not available. Data will not persist across sessions.');
+                return false;
+            }
+        }
+
+        function updateStorageStatus() {
+            const statusElement = document.getElementById('storageStatus');
+            const iconElement = document.getElementById('storageIcon');
+            const textElement = document.getElementById('storageText');
+            
+            if (storageAvailable) {
+                statusElement.className = 'storage-status enabled';
+                iconElement.textContent = '✅';
+                textElement.textContent = 'Persistent storage enabled';
+            } else {
+                statusElement.className = 'storage-status disabled';
+                iconElement.textContent = '⚠️';
+                textElement.textContent = 'Persistent storage unavailable - data will reset on refresh';
+            }
+        }
         
         // Original medicine data structure
         const originalMedicineData = {
@@ -484,18 +544,27 @@
         // Current medicine data (will be loaded from storage or default to original)
         let medicineData = {};
 
-        // Persistent storage functions using memory simulation
+        // Enhanced persistent storage functions
         function saveToStorage(data) {
             try {
-                // Create a JSON string that simulates persistent storage
+                if (!storageAvailable) {
+                    // Fallback to memory storage
+                    window.persistentMedicineData = JSON.stringify({
+                        ...data,
+                        lastUpdated: new Date().toISOString(),
+                        version: STORAGE_VERSION
+                    });
+                    document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
+                    return true;
+                }
+                
                 const jsonData = JSON.stringify({
                     ...data,
                     lastUpdated: new Date().toISOString(),
-                    version: '1.0'
+                    version: STORAGE_VERSION
                 });
                 
-                // Store in global variable to simulate persistence
-                window.persistentMedicineData = jsonData;
+                localStorage.setItem(STORAGE_KEY, jsonData);
                 
                 // Update UI to show last saved time
                 document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
@@ -503,15 +572,47 @@
                 return true;
             } catch (error) {
                 console.error('Error saving data:', error);
-                return false;
+                
+                // Show user-friendly error
+                showNotification('⚠️ Unable to save data. Changes may be lost on refresh.', 'error');
+                
+                // Try fallback to memory
+                try {
+                    window.persistentMedicineData = JSON.stringify({
+                        ...data,
+                        lastUpdated: new Date().toISOString(),
+                        version: STORAGE_VERSION
+                    });
+                    return true;
+                } catch (fallbackError) {
+                    console.error('Fallback storage also failed:', fallbackError);
+                    return false;
+                }
             }
         }
 
         function loadFromStorage() {
             try {
-                // Try to load from global variable (simulates persistent storage)
-                if (window.persistentMedicineData) {
-                    const data = JSON.parse(window.persistentMedicineData);
+                let data = null;
+                
+                if (storageAvailable) {
+                    const stored = localStorage.getItem(STORAGE_KEY);
+                    if (stored) {
+                        data = JSON.parse(stored);
+                    }
+                } else {
+                    // Fallback to memory storage
+                    if (window.persistentMedicineData) {
+                        data = JSON.parse(window.persistentMedicineData);
+                    }
+                }
+                
+                if (data) {
+                    // Check version compatibility
+                    if (data.version !== STORAGE_VERSION) {
+                        console.warn('Data version mismatch. Migrating data...');
+                        // Could add migration logic here if needed
+                    }
                     
                     // Update last updated time
                     if (data.lastUpdated) {
@@ -528,7 +629,38 @@
                 }
             } catch (error) {
                 console.error('Error loading data:', error);
+                showNotification('⚠️ Error loading saved data. Using default values.', 'error');
                 return null;
+            }
+        }
+
+        // Data validation function
+        function validateMedicineData(data) {
+            try {
+                // Basic structure validation
+                if (!data || typeof data !== 'object') return false;
+                if (!data.father || !data.mother) return false;
+                
+                // Validate each person's data structure
+                for (const person of ['father', 'mother']) {
+                    const personData = data[person];
+                    if (!personData || typeof personData !== 'object') return false;
+                    
+                    // Check that each time slot is an array
+                    for (const slot in personData) {
+                        if (!Array.isArray(personData[slot])) return false;
+                        
+                        // Validate each medicine object
+                        for (const medicine of personData[slot]) {
+                            if (!medicine.name || typeof medicine.stock !== 'number') return false;
+                        }
+                    }
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Data validation error:', error);
+                return false;
             }
         }
 
@@ -536,21 +668,48 @@
         function initializeData() {
             const savedData = loadFromStorage();
             
-            if (savedData) {
+            if (savedData && validateMedicineData(savedData)) {
                 // Use saved data
                 medicineData = savedData;
-                showNotification('Previous data loaded successfully!');
+                showNotification('💾 Previous data loaded successfully!');
+                
+                // Count total medicines tracked
+                let totalMedicines = 0;
+                Object.values(medicineData.father).flat().forEach(() => totalMedicines++);
+                Object.values(medicineData.mother).flat().forEach(() => totalMedicines++);
+                
+                console.log(`Loaded data for ${totalMedicines} medicines`);
             } else {
-                // Use original data for first time
+                // Use original data for first time or if saved data is corrupted
                 medicineData = JSON.parse(JSON.stringify(originalMedicineData));
                 saveToStorage(medicineData);
-                showNotification('Welcome for AI-powered medicine tracking!');
+                showNotification('🎉 Welcome to AI-powered medicine tracking!');
+                console.log('Initialized with original data');
             }
         }
 
         // Save data after any changes
         function saveData() {
-            return saveToStorage(medicineData);
+            if (validateMedicineData(medicineData)) {
+                return saveToStorage(medicineData);
+            } else {
+                console.error('Invalid data structure, not saving');
+                showNotification('⚠️ Data validation failed. Changes not saved.', 'error');
+                return false;
+            }
+        }
+
+        // Auto-save with error handling
+        function autoSave() {
+            try {
+                if (saveData()) {
+                    console.log('Auto-save successful');
+                } else {
+                    console.warn('Auto-save failed');
+                }
+            } catch (error) {
+                console.error('Auto-save error:', error);
+            }
         }
 
         // Check if medicine was taken today
@@ -563,6 +722,10 @@
 
         // Initialize the app
         function initApp() {
+            // Check storage availability first
+            checkStorageAvailability();
+            updateStorageStatus();
+            
             initializeData();
             renderFatherMedicines();
             renderMotherMedicines();
@@ -572,6 +735,13 @@
                 setTimeout(() => {
                     document.getElementById('installPrompt').style.display = 'block';
                 }, 2000);
+            }
+            
+            // Warn user if storage is not available
+            if (!storageAvailable) {
+                setTimeout(() => {
+                    showNotification('⚠️ Browser storage unavailable. Data will reset on page refresh.', 'error');
+                }, 1000);
             }
         }
 
@@ -606,420 +776,395 @@
 
             timeSlots.forEach(slot => {
                 if (medicineData.father[slot.key] && medicineData.father[slot.key].length > 0) {
-                    const slotDiv = document.createElement('div');
-                    slotDiv.className = 'time-slot';
-                    slotDiv.innerHTML = `<h3>${slot.icon} ${slot.title.replace(slot.icon + ' ', '')}</h3>`;
+                const timeSlotDiv = document.createElement('div');
+                timeSlotDiv.className = 'time-slot';
+                
+                const header = document.createElement('h3');
+                header.innerHTML = `${slot.icon} ${slot.title}`;
+                timeSlotDiv.appendChild(header);
 
-                    medicineData.father[slot.key].forEach((medicine, index) => {
-                        const medicineDiv = createMedicineItem(medicine, 'father', slot.key, index);
-                        slotDiv.appendChild(medicineDiv);
-                    });
+                medicineData.father[slot.key].forEach((medicine, index) => {
+                    const medicineDiv = document.createElement('div');
+                    medicineDiv.className = 'medicine-item';
+                    
+                    // Add classes for styling based on stock and taken status
+                    if (medicine.stock <= 5) {
+                        medicineDiv.classList.add('low-stock');
+                    }
+                    if (wasTakenToday(medicine.lastTaken)) {
+                        medicineDiv.classList.add('taken-today');
+                    }
 
-                    fatherSection.appendChild(slotDiv);
+                    const takenToday = wasTakenToday(medicine.lastTaken);
+                    const stockClass = medicine.stock <= 5 ? 'low' : (takenToday ? 'taken' : '');
+                    
+                    medicineDiv.innerHTML = `
+                        <div class="medicine-header">
+                            <div class="medicine-name">${medicine.name}</div>
+                            <div class="stock-count ${stockClass}">
+                                ${medicine.stock} left
+                            </div>
+                        </div>
+                        <div class="medicine-details">
+                            <strong>Dose:</strong> ${medicine.dose}<br>
+                            ${medicine.timing ? `<strong>Timing:</strong> ${medicine.timing}<br>` : ''}
+                        </div>
+                        ${takenToday ? 
+                            `<div class="last-taken">✅ Taken today at ${new Date(medicine.lastTaken).toLocaleTimeString()}</div>` : 
+                            ''
+                        }
+                        <div class="action-buttons">
+                            <button class="btn btn-take ${takenToday ? 'disabled' : ''}" 
+                                    ${takenToday ? 'disabled' : ''} 
+                                    onclick="takeMedicine('father', '${slot.key}', ${index})">
+                                ${takenToday ? '✅ Taken Today' : '💊 Take Medicine'}
+                            </button>
+                            <button class="btn btn-calendar" onclick="viewCalendar('father', '${medicine.name}')">
+                                📅 History
+                            </button>
+                        </div>
+                    `;
+                    
+                    timeSlotDiv.appendChild(medicineDiv);
+                });
+
+                fatherSection.appendChild(timeSlotDiv);
+            }
+        });
+    }
+
+    function renderMotherMedicines() {
+        const motherSection = document.getElementById('mother');
+        motherSection.innerHTML = '';
+
+        const timeSlots = [
+            { key: 'afterBreakfast', title: '🥞 After Breakfast', icon: '🥞' },
+            { key: 'afterDinner', title: '🌙 After Dinner', icon: '🌙' }
+        ];
+
+        timeSlots.forEach(slot => {
+            if (medicineData.mother[slot.key] && medicineData.mother[slot.key].length > 0) {
+                const timeSlotDiv = document.createElement('div');
+                timeSlotDiv.className = 'time-slot';
+                
+                const header = document.createElement('h3');
+                header.innerHTML = `${slot.icon} ${slot.title}`;
+                timeSlotDiv.appendChild(header);
+
+                medicineData.mother[slot.key].forEach((medicine, index) => {
+                    const medicineDiv = document.createElement('div');
+                    medicineDiv.className = 'medicine-item';
+                    
+                    // Add classes for styling based on stock and taken status
+                    if (medicine.stock <= 10) { // Higher threshold for mother's medicines as they're taken twice daily
+                        medicineDiv.classList.add('low-stock');
+                    }
+                    if (wasTakenToday(medicine.lastTaken)) {
+                        medicineDiv.classList.add('taken-today');
+                    }
+
+                    const takenToday = wasTakenToday(medicine.lastTaken);
+                    const stockClass = medicine.stock <= 10 ? 'low' : (takenToday ? 'taken' : '');
+                    
+                    medicineDiv.innerHTML = `
+                        <div class="medicine-header">
+                            <div class="medicine-name">${medicine.name}</div>
+                            <div class="stock-count ${stockClass}">
+                                ${medicine.stock} left
+                            </div>
+                        </div>
+                        <div class="medicine-details">
+                            <strong>Dose:</strong> ${medicine.dose}<br>
+                            ${medicine.timing ? `<strong>Timing:</strong> ${medicine.timing}<br>` : ''}
+                        </div>
+                        ${takenToday ? 
+                            `<div class="last-taken">✅ Taken today at ${new Date(medicine.lastTaken).toLocaleTimeString()}</div>` : 
+                            ''
+                        }
+                        <div class="action-buttons">
+                            <button class="btn btn-take ${takenToday ? 'disabled' : ''}" 
+                                    ${takenToday ? 'disabled' : ''} 
+                                    onclick="takeMedicine('mother', '${slot.key}', ${index})">
+                                ${takenToday ? '✅ Taken Today' : '💊 Take Medicine'}
+                            </button>
+                            <button class="btn btn-calendar" onclick="viewCalendar('mother', '${medicine.name}')">
+                                📅 History
+                            </button>
+                        </div>
+                    `;
+                    
+                    timeSlotDiv.appendChild(medicineDiv);
+                });
+
+                motherSection.appendChild(timeSlotDiv);
+            }
+        });
+    }
+
+    function takeMedicine(person, timeSlot, medicineIndex) {
+        const medicine = medicineData[person][timeSlot][medicineIndex];
+        
+        // Check if already taken today
+        if (wasTakenToday(medicine.lastTaken)) {
+            showNotification('💊 This medicine was already taken today!', 'error');
+            return;
+        }
+        
+        // Check stock
+        if (medicine.stock <= 0) {
+            showNotification('❌ Out of stock! Please refill this medicine.', 'error');
+            return;
+        }
+        
+        // Update medicine data
+        medicine.stock--;
+        medicine.lastTaken = new Date().toISOString();
+        
+        // Save data
+        autoSave();
+        
+        // Re-render the appropriate section
+        if (person === 'father') {
+            renderFatherMedicines();
+        } else {
+            renderMotherMedicines();
+        }
+        
+        // Show success notification
+        showNotification(`✅ ${medicine.name} taken successfully! ${medicine.stock} tablets remaining.`);
+        
+        // Check for low stock warning
+        const threshold = person === 'mother' ? 10 : 5;
+        if (medicine.stock <= threshold) {
+            setTimeout(() => {
+                showNotification(`⚠️ Low stock alert: Only ${medicine.stock} ${medicine.name} tablets left!`, 'error');
+            }, 2000);
+        }
+    }
+
+    function viewCalendar(person, medicineName) {
+        // This could be expanded to show a full calendar view
+        showNotification(`📅 Calendar view for ${medicineName} - Feature coming soon!`);
+    }
+
+    function resetAllStock() {
+        if (confirm('Are you sure you want to reset all medicine stock to original levels? This action cannot be undone.')) {
+            // Reset to original stock levels
+            medicineData = JSON.parse(JSON.stringify(originalMedicineData));
+            
+            // Save the reset data
+            autoSave();
+            
+            // Re-render both sections
+            renderFatherMedicines();
+            renderMotherMedicines();
+            
+            showNotification('🔄 All medicine stock has been reset to original levels!');
+        }
+    }
+
+    function showNotification(message, type = 'success') {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.className = `notification ${type === 'error' ? 'error' : ''}`;
+        notification.classList.add('show');
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 4000);
+    }
+
+    // Voice Assistant Functions
+    let isListening = false;
+    let recognition;
+
+    function initializeVoiceRecognition() {
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = function() {
+                isListening = true;
+                document.getElementById('voiceBtn').classList.add('listening');
+                document.getElementById('voiceOutput').style.display = 'block';
+                document.getElementById('voiceText').textContent = 'Listening... Speak now!';
+            };
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript.toLowerCase();
+                processVoiceCommand(transcript);
+            };
+
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error:', event.error);
+                document.getElementById('voiceText').textContent = `Error: ${event.error}. Please try again.`;
+                stopListening();
+            };
+
+            recognition.onend = function() {
+                stopListening();
+            };
+        } else {
+            console.warn('Speech recognition not supported in this browser');
+        }
+    }
+
+    function toggleVoiceAssistant() {
+        if (isListening) {
+            stopListening();
+        } else {
+            startListening();
+        }
+    }
+
+    function startListening() {
+        if (recognition) {
+            try {
+                recognition.start();
+            } catch (error) {
+                console.error('Error starting recognition:', error);
+                showNotification('❌ Voice recognition failed to start', 'error');
+            }
+        } else {
+            showNotification('❌ Voice recognition not supported in this browser', 'error');
+        }
+    }
+
+    function stopListening() {
+        isListening = false;
+        document.getElementById('voiceBtn').classList.remove('listening');
+        if (recognition) {
+            recognition.stop();
+        }
+    }
+
+    function processVoiceCommand(command) {
+        let response = "I didn't understand that command. Please try again.";
+        
+        // Stock checking commands
+        if (command.includes('stock') || command.includes('how many')) {
+            response = getStockInfo(command);
+        }
+        // Medicine information commands
+        else if (command.includes('what is') || command.includes('tell me about')) {
+            response = getMedicineInfo(command);
+        }
+        // Taking medicine commands
+        else if (command.includes('take') || command.includes('taken')) {
+            response = handleTakeMedicineCommand(command);
+        }
+        // General help
+        else if (command.includes('help')) {
+            response = "I can help you check medicine stock, provide medicine information, and track when medicines are taken. Try saying 'check father's medicine stock' or 'what is Metolol used for?'";
+        }
+        
+        document.getElementById('voiceText').textContent = response;
+        
+        // Use text-to-speech if available
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(response);
+            speechSynthesis.speak(utterance);
+        }
+    }
+
+    function getStockInfo(command) {
+        let response = "";
+        let lowStockMedicines = [];
+        
+        if (command.includes('father')) {
+            Object.values(medicineData.father).flat().forEach(medicine => {
+                if (medicine.stock <= 5) {
+                    lowStockMedicines.push(`${medicine.name}: ${medicine.stock} left`);
                 }
             });
-        }
-
-        function renderMotherMedicines() {
-            const motherSection = document.getElementById('mother');
-            motherSection.innerHTML = '';
-
-            const timeSlots = [
-                { key: 'afterBreakfast', title: '🥞 After Breakfast', icon: '🥞' },
-                { key: 'afterDinner', title: '🌙 After Dinner', icon: '🌙' }
-            ];
-
-            timeSlots.forEach(slot => {
-                if (medicineData.mother[slot.key] && medicineData.mother[slot.key].length > 0) {
-                    const slotDiv = document.createElement('div');
-                    slotDiv.className = 'time-slot';
-                    slotDiv.innerHTML = `<h3>${slot.icon} ${slot.title.replace(slot.icon + ' ', '')}</h3>`;
-
-                    // Handle duplicate medicines for mother (Cinod and Zavamet appear in both slots)
-                    const uniqueMedicines = slot.key === 'afterDinner' ? 
-                        medicineData.mother[slot.key].filter(med => med.timing.includes('dinner')) :
-                        medicineData.mother[slot.key];
-
-                    uniqueMedicines.forEach((medicine, index) => {
-                        const medicineDiv = createMedicineItem(medicine, 'mother', slot.key, index);
-                        slotDiv.appendChild(medicineDiv);
-                    });
-
-                    motherSection.appendChild(slotDiv);
+            response = lowStockMedicines.length > 0 ? 
+                `Father's low stock medicines: ${lowStockMedicines.join(', ')}` :
+                "Father's medicines are well stocked.";
+        } else if (command.includes('mother')) {
+            Object.values(medicineData.mother).flat().forEach(medicine => {
+                if (medicine.stock <= 10) {
+                    lowStockMedicines.push(`${medicine.name}: ${medicine.stock} left`);
                 }
             });
+            response = lowStockMedicines.length > 0 ? 
+                `Mother's low stock medicines: ${lowStockMedicines.join(', ')}` :
+                "Mother's medicines are well stocked.";
+        } else {
+            // General stock check
+            Object.values(medicineData.father).flat().forEach(medicine => {
+                if (medicine.stock <= 5) lowStockMedicines.push(`Father's ${medicine.name}: ${medicine.stock} left`);
+            });
+            Object.values(medicineData.mother).flat().forEach(medicine => {
+                if (medicine.stock <= 10) lowStockMedicines.push(`Mother's ${medicine.name}: ${medicine.stock} left`);
+            });
+            
+            response = lowStockMedicines.length > 0 ? 
+                `Low stock medicines: ${lowStockMedicines.join(', ')}` :
+                "All medicines are well stocked.";
         }
+        
+        return response;
+    }
 
-        function createMedicineItem(medicine, person, slot, index) {
-            const isLowStock = medicine.stock <= 1;
-            const takenToday = wasTakenToday(medicine.lastTaken);
-            
-            const medicineDiv = document.createElement('div');
-            let className = 'medicine-item';
-            if (isLowStock) className += ' low-stock';
-            if (takenToday) className += ' taken-today';
-            medicineDiv.className = className;
-            
-            let stockStatus = '';
-            if (takenToday) {
-                stockStatus = 'Taken Today';
-            } else if (isLowStock) {
-                stockStatus = `${medicine.stock} ⚠️`;
-            } else {
-                stockStatus = `${medicine.stock} 💊`;
+    function getMedicineInfo(command) {
+        const medicineInfo = {
+            'metolol': 'Metolol MF is a beta-blocker used to treat high blood pressure and heart conditions.',
+            'pilclop': 'Pilclop contains clopidogrel, used to prevent blood clots.',
+            'cordarone': 'Cordarone contains amiodarone, used to treat irregular heartbeats.',
+            'acitrom': 'Acitrom is an anticoagulant used to prevent blood clots.',
+            'telzox': 'Telzox H is used to treat high blood pressure.',
+            'cinod': 'Cinod is used to manage diabetes.',
+            'zavamet': 'Zavamet is used to control blood sugar in diabetes.'
+        };
+        
+        for (const [med, info] of Object.entries(medicineInfo)) {
+            if (command.includes(med)) {
+                return info;
             }
-
-            let lastTakenText = '';
-            if (medicine.lastTaken) {
-                const takenDate = new Date(medicine.lastTaken);
-                lastTakenText = `<div class="last-taken">Last taken: ${takenDate.toLocaleDateString()} at ${takenDate.toLocaleTimeString()}</div>`;
-            }
-            
-            medicineDiv.innerHTML = `
-                <div class="medicine-header">
-                    <div class="medicine-name">${medicine.name}</div>
-                    <div class="stock-count ${isLowStock ? 'low' : ''} ${takenToday ? 'taken' : ''}">
-                        ${stockStatus}
-                    </div>
-                </div>
-                <div class="medicine-details">
-                    ${medicine.dose} ${medicine.timing ? '• ' + medicine.timing : ''}
-                    ${lastTakenText}
-                </div>
-                <div class="action-buttons">
-                    <button class="btn btn-take" 
-                            onclick="takeMedicine('${person}', '${slot}', ${index})"
-                            ${medicine.stock <= 0 ? 'disabled' : ''}>
-                        ${medicine.stock <= 0 ? ' Out of Stock' : (takenToday ? 'Taken Today' : 'Take Medicine')}
-                    </button>
-                    <button class="btn btn-calendar" onclick="addToCalendar('${medicine.name}', '${slot}')">
-                        Add to Calendar
-                    </button>
-                </div>
-            `;
-
-            return medicineDiv;
         }
+        
+        return "I don't have specific information about that medicine. Please consult with a healthcare provider.";
+    }
 
-        function takeMedicine(person, slot, index) {
-            const medicine = medicineData[person][slot][index];
-            
-            if (medicine.stock > 0) {
-                // Check if already taken today
-                if (wasTakenToday(medicine.lastTaken)) {
-                    showNotification(`ℹ️ ${medicine.name} was already taken today!`, 'error');
-                    return;
-                }
-                
-                // Decrease stock and record time
-                medicine.stock--;
-                medicine.lastTaken = new Date().toISOString();
-                
-                // Save data to persistent storage
-                if (saveData()) {
-                    const remainingStock = medicine.stock;
-                    
-                    if (remainingStock <= 1) {
-                        showNotification(`⚠️ ${medicine.name} taken! Only ${remainingStock} dose${remainingStock === 1 ? '' : 's'} left - Time to refill!`, 'error');
-                    } else {
-                        showNotification(`✅ ${medicine.name} taken successfully! ${remainingStock} doses remaining.`);
-                    }
-                    
-                    // Re-render the appropriate section
-                    if (person === 'father') {
-                        renderFatherMedicines();
-                    } else {
-                        renderMotherMedicines();
-                    }
-                } else {
-                    showNotification('Error saving data. Please try again.', 'error');
-               }
-           } else {
-               showNotification(`❌ ${medicine.name} is out of stock!`, 'error');
-           }
-       }
+    function handleTakeMedicineCommand(command) {
+        return "Please use the app interface to mark medicines as taken for accurate tracking.";
+    }
 
-       function addToCalendar(medicineName, timeSlot) {
-           const timeMap = {
-               'morning': '08:00',
-               'afterBreakfast': '10:00',
-               'afternoon': '16:00',
-               'afterDinner': '21:00'
-           };
-           
-           const time = timeMap[timeSlot] || '09:00';
-           const tomorrow = new Date();
-           tomorrow.setDate(tomorrow.getDate() + 1);
-           
-           const startDate = tomorrow.toISOString().split('T')[0] + 'T' + time + ':00';
-           const endDate = tomorrow.toISOString().split('T')[0] + 'T' + time.split(':')[0] + ':30:00';
-           
-           const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Take ${medicineName}&dates=${startDate.replace(/[-:]/g, '')}/${endDate.replace(/[-:]/g, '')}&details=Reminder to take ${medicineName}&recur=RRULE:FREQ=DAILY`;
-           
-           window.open(calendarUrl, '_blank');
-           showNotification(`Calendar reminder created for ${medicineName}!`);
-       }
+    function closeVoiceOutput() {
+        document.getElementById('voiceOutput').style.display = 'none';
+        stopListening();
+    }
 
-       function resetAllStock() {
-           if (confirm('Are you sure you want to reset all medicine stock to original levels? This will clear all tracking data.')) {
-               medicineData = JSON.parse(JSON.stringify(originalMedicineData));
-               
-               if (saveData()) {
-                   renderFatherMedicines();
-                   renderMotherMedicines();
-                   showNotification('All medicine stock has been reset to original levels!');
-               } else {
-                   showNotification('Error resetting stock. Please try again.', 'error');
-               }
-           }
-       }
+    // Install prompt functions
+    function showInstallInstructions() {
+        const instructions = isMobile() ? 
+            "On mobile: Tap the menu button in your browser and select 'Add to Home Screen' or 'Install App'" :
+            "On desktop: Look for the install icon in your browser's address bar or use the browser menu";
+        
+        alert(instructions);
+        hideInstallPrompt();
+    }
 
-       function showNotification(message, type = 'success') {
-           const notification = document.getElementById('notification');
-           notification.textContent = message;
-           notification.className = `notification ${type === 'error' ? 'error' : ''}`;
-           notification.classList.add('show');
-           
-           setTimeout(() => {
-               notification.classList.remove('show');
-           }, 4000);
-       }
+    function hideInstallPrompt() {
+        document.getElementById('installPrompt').style.display = 'none';
+    }
 
-       // Voice Assistant Functions
-       let isListening = false;
-       let recognition;
+    // Initialize the application when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        initApp();
+        initializeVoiceRecognition();
+    });
 
-       function initSpeechRecognition() {
-           if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-               recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-               recognition.continuous = false;
-               recognition.interimResults = false;
-               recognition.lang = 'en-US';
-               
-               recognition.onstart = function() {
-                   isListening = true;
-                   document.getElementById('voiceBtn').classList.add('listening');
-                   document.getElementById('voiceOutput').style.display = 'block';
-                   document.getElementById('voiceText').textContent = 'Listening...';
-               };
-               
-               recognition.onresult = function(event) {
-                   const transcript = event.results[0][0].transcript;
-                   processVoiceCommand(transcript);
-               };
-               
-               recognition.onerror = function(event) {
-                   console.error('Speech recognition error:', event.error);
-                   speak('Sorry, I couldn\'t understand that. Please try again.');
-               };
-               
-               recognition.onend = function() {
-                   isListening = false;
-                   document.getElementById('voiceBtn').classList.remove('listening');
-               };
-           }
-       }
+    // Cleanup function for when page is about to unload
+    window.addEventListener('beforeunload', function() {
+        autoSave();
+    });
 
-       function toggleVoiceAssistant() {
-           if (!recognition) {
-               initSpeechRecognition();
-           }
-           
-           if (isListening) {
-               recognition.stop();
-           } else {
-               recognition.start();
-           }
-       }
-
-       function processVoiceCommand(command) {
-           const lowerCommand = command.toLowerCase();
-           document.getElementById('voiceText').textContent = `You said: "${command}"`;
-           
-           let response = '';
-           
-           // Stock check commands
-           if (lowerCommand.includes('stock') || lowerCommand.includes('how many')) {
-               response = checkMedicineStock(lowerCommand);
-           }
-           // Medicine information commands
-           else if (lowerCommand.includes('what is') || lowerCommand.includes('tell me about')) {
-               response = getMedicineInfo(lowerCommand);
-           }
-           // Reminder commands
-           else if (lowerCommand.includes('remind') || lowerCommand.includes('when')) {
-               response = getMedicineReminder(lowerCommand);
-           }
-           // Take medicine commands
-           else if (lowerCommand.includes('take') || lowerCommand.includes('took')) {
-               response = handleTakeMedicineCommand(lowerCommand);
-           }
-           // General health commands
-           else if (lowerCommand.includes('health') || lowerCommand.includes('advice')) {
-               response = 'For medical advice, please consult with your healthcare provider. I can help you track your medications and remind you to take them on time.';
-           }
-           else {
-               response = 'I can help you with medicine stock levels, dosage information, reminders, and tracking. Try asking "Check father\'s medicine stock" or "What is Metolol used for?"';
-           }
-           
-           speak(response);
-           setTimeout(() => {
-               document.getElementById('voiceText').textContent = response;
-           }, 1000);
-       }
-
-       function checkMedicineStock(command) {
-           let response = '';
-           const lowStockMeds = [];
-           
-           // Check if asking about specific person
-           if (command.includes('father')) {
-               response = 'Father\'s medicine stock: ';
-               Object.values(medicineData.father).flat().forEach(med => {
-                   response += `${med.name}: ${med.stock} doses. `;
-                   if (med.stock <= 1) lowStockMeds.push(med.name);
-               });
-           } else if (command.includes('mother')) {
-               response = 'Mother\'s medicine stock: ';
-               const uniqueMeds = new Map();
-               Object.values(medicineData.mother).flat().forEach(med => {
-                   uniqueMeds.set(med.name, med);
-               });
-               uniqueMeds.forEach(med => {
-                   response += `${med.name}: ${med.stock} doses. `;
-                   if (med.stock <= 1) lowStockMeds.push(med.name);
-               });
-           } else {
-               // Check all medicines
-               response = 'All medicine stock levels: ';
-               Object.values(medicineData.father).flat().forEach(med => {
-                   response += `Father's ${med.name}: ${med.stock} doses. `;
-                   if (med.stock <= 1) lowStockMeds.push(`Father's ${med.name}`);
-               });
-               
-               const uniqueMeds = new Map();
-               Object.values(medicineData.mother).flat().forEach(med => {
-                   uniqueMeds.set(med.name, med);
-               });
-               uniqueMeds.forEach(med => {
-                   response += `Mother's ${med.name}: ${med.stock} doses. `;
-                   if (med.stock <= 1) lowStockMeds.push(`Mother's ${med.name}`);
-               });
-           }
-           
-           if (lowStockMeds.length > 0) {
-               response += `Warning: Low stock for ${lowStockMeds.join(', ')}. Please refill soon.`;
-           }
-           
-           return response;
-       }
-
-       function getMedicineInfo(command) {
-           const medicines = {
-               'metolol': 'Metolol MF is a beta-blocker used to treat high blood pressure and heart conditions. Take as prescribed with food.',
-               'acitrom': 'Acitrom is an anticoagulant used to prevent blood clots. Dosage alternates between 1mg and 2mg as prescribed.',
-               'pilclop': 'Pilclop is an antiplatelet medication used to prevent heart attacks and strokes.',
-               'cordarone': 'Cordarone is used to treat irregular heartbeats. Take exactly as prescribed.',
-               'telzox': 'Telzox H is used to treat high blood pressure. Take regularly as prescribed.',
-               'cinod': 'Cinod is used to manage diabetes and blood sugar levels.',
-               'zavamet': 'Zavamet is a combination medication for type 2 diabetes management.'
-           };
-           
-           for (let med in medicines) {
-               if (command.includes(med)) {
-                   return medicines[med];
-               }
-           }
-           
-           return 'I don\'t have specific information about that medicine. Please consult your healthcare provider or pharmacist for detailed information.';
-       }
-
-       function getMedicineReminder(command) {
-           const currentHour = new Date().getHours();
-           let response = 'Medicine reminders: ';
-           
-           if (currentHour < 10) {
-               response += 'Morning medicines for father should be taken before breakfast. ';
-           }
-           if (currentHour >= 10 && currentHour < 16) {
-               response += 'After breakfast medicines should be taken by now. ';
-           }
-           if (currentHour >= 16 && currentHour < 20) {
-               response += 'Time for afternoon medicines - Father\'s Acitrom at 4 PM. ';
-           }
-           if (currentHour >= 20) {
-               response += 'Evening medicines should be taken after dinner. ';
-           }
-           
-           return response + 'Check the app for detailed medicine schedules.';
-       }
-
-       function handleTakeMedicineCommand(command) {
-           return 'Please use the app interface to mark medicines as taken. This ensures accurate tracking and stock management.';
-       }
-
-       function speak(text) {
-           if ('speechSynthesis' in window) {
-               const utterance = new SpeechSynthesisUtterance(text);
-               utterance.rate = 0.8;
-               utterance.pitch = 1;
-               utterance.volume = 0.8;
-               speechSynthesis.speak(utterance);
-           }
-       }
-
-       function closeVoiceOutput() {
-           document.getElementById('voiceOutput').style.display = 'none';
-           if (isListening) {
-               recognition.stop();
-           }
-       }
-
-       // Install prompt functions
-       function showInstallInstructions() {
-           let instructions = '';
-           
-           if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-               instructions = 'To install:\n1. Tap the Share button (⬆️)\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add" in the top right corner';
-           } else if (/Android/i.test(navigator.userAgent)) {
-               instructions = 'To install:\n1. Tap the menu (⋮) in your browser\n2. Tap "Add to Home Screen" or "Install App"\n3. Tap "Add" or "Install"';
-           } else {
-               instructions = 'To install:\n1. Look for the install icon in your browser\'s address bar\n2. Click it and follow the prompts\n3. Or use your browser\'s menu to "Install" or "Add to Home Screen"';
-           }
-           
-           alert(instructions);
-       }
-
-       function hideInstallPrompt() {
-           document.getElementById('installPrompt').style.display = 'none';
-       }
-
-       // PWA installation handling
-       let deferredPrompt;
-       
-       window.addEventListener('beforeinstallprompt', (e) => {
-           e.preventDefault();
-           deferredPrompt = e;
-           document.getElementById('installPrompt').style.display = 'block';
-       });
-
-       // Service Worker registration (if needed for PWA)
-       if ('serviceWorker' in navigator) {
-           window.addEventListener('load', () => {
-               // Register service worker if available
-               navigator.serviceWorker.register('/sw.js').catch(() => {
-                   // Service worker not available, app still works
-               });
-           });
-       }
-
-       // Initialize the app when DOM is loaded
-       document.addEventListener('DOMContentLoaded', initApp);
-
-       // Auto-save every 30 seconds
-       setInterval(() => {
-           saveData();
-       }, 30000);
-   </script>
+    // Auto-save every 5 minutes as backup
+    setInterval(autoSave, 5 * 60 * 1000);
+    </script>
 </body>
 </html>
