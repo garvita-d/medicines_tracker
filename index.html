@@ -942,305 +942,98 @@
             }, 2000);
         }
     }
-// Updated Calendar Integration Functions
-
-function addToCalendar(reminder) {
-    try {
-        const startDate = new Date(`${reminder.date}T${reminder.time}`);
-        const endDate = new Date(startDate.getTime() + 15 * 60000); // 15 minutes duration
-        
-        // Create calendar event details
-        const title = `💊 Medicine: ${reminder.medicineName}`;
-        const description = `Time to take ${reminder.medicineName}${reminder.message ? '\n\nNote: ' + reminder.message : ''}`;
-        const location = 'Medicine Reminder';
-        
-        if (isMobile()) {
-            // Mobile device - try native calendar apps first
-            openMobileCalendar(reminder, title, description, startDate, endDate);
-        } else {
-            // Desktop - create ICS file for direct import
-            createAndDownloadICS(reminder, title, description, startDate, endDate);
-        }
-        
-    } catch (error) {
-        console.error('Error adding to calendar:', error);
-        showNotification('⚠️ Unable to create calendar reminder. Please add manually.', 'error');
-    }
+function viewCalendar(person, medicineName) {
+    showCalendarModal(person, medicineName);
+}
+function showCalendarModal(person, medicineName) {
+    // Create modal HTML
+    const modalHTML = `
+        <div id="calendarModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; display: flex; align-items: center; justify-content: center;">
+            <div style="background: white; border-radius: 20px; padding: 30px; max-width: 90%; max-height: 90%; overflow-y: auto; position: relative;">
+                <button onclick="closeCalendarModal()" style="position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">×</button>
+                
+                <h2 style="color: #4F46E5; margin-bottom: 20px; text-align: center;">📅 Set Reminder for ${medicineName}</h2>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">Select Date:</label>
+                    <input type="date" id="reminderDate" style="width: 100%; padding: 12px; border: 2px solid #E5E7EB; border-radius: 10px; font-size: 16px;" min="${new Date().toISOString().split('T')[0]}">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">Select Time:</label>
+                    <input type="time" id="reminderTime" style="width: 100%; padding: 12px; border: 2px solid #E5E7EB; border-radius: 10px; font-size: 16px;">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">Reminder Message (Optional):</label>
+                    <textarea id="reminderMessage" placeholder="e.g., Take with food, Check blood pressure first, etc." style="width: 100%; padding: 12px; border: 2px solid #E5E7EB; border-radius: 10px; font-size: 16px; min-height: 80px; resize: vertical;"></textarea>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">Repeat:</label>
+                    <select id="reminderRepeat" style="width: 100%; padding: 12px; border: 2px solid #E5E7EB; border-radius: 10px; font-size: 16px;">
+                        <option value="once">Once</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 15px; margin-top: 30px;">
+                    <button onclick="setReminder('${person}', '${medicineName}')" style="flex: 1; background: linear-gradient(45deg, #10B981, #059669); color: white; border: none; padding: 15px 25px; border-radius: 25px; cursor: pointer; font-weight: 600; font-size: 16px;">
+                        🔔 Set Reminder
+                    </button>
+                    <button onclick="closeCalendarModal()" style="flex: 1; background: linear-gradient(45deg, #6B7280, #4B5563); color: white; border: none; padding: 15px 25px; border-radius: 25px; cursor: pointer; font-weight: 600; font-size: 16px;">
+                        Cancel
+                    </button>
+                </div>
+                
+                <div id="existingReminders" style="margin-top: 30px;">
+                    <h3 style="color: #4F46E5; margin-bottom: 15px; border-top: 2px solid #E5E7EB; padding-top: 20px;">📋 Existing Reminders</h3>
+                    <div id="remindersList"></div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to document
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Load existing reminders
+    loadExistingReminders(person, medicineName);
+    
+    // Set default time based on medicine schedule
+    setDefaultReminderTime(person, medicineName);
 }
 
-function openMobileCalendar(reminder, title, description, startDate, endDate) {
-    const startTimestamp = Math.floor(startDate.getTime() / 1000);
-    const endTimestamp = Math.floor(endDate.getTime() / 1000);
+function setDefaultReminderTime(person, medicineName) {
+    const timeInput = document.getElementById('reminderTime');
+    const dateInput = document.getElementById('reminderDate');
     
-    // Format dates for different calendar schemes
-    const startDateISO = startDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-    const endDateISO = endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    // Set default date to today
+    dateInput.value = new Date().toISOString().split('T')[0];
     
-    const encodedTitle = encodeURIComponent(title);
-    const encodedDescription = encodeURIComponent(description);
-    
-    // Create recurrence rule
-    let recurrenceRule = '';
-    if (reminder.repeat !== 'once') {
-        switch (reminder.repeat) {
-            case 'daily':
-                recurrenceRule = 'FREQ=DAILY';
-                break;
-            case 'weekly':
-                recurrenceRule = 'FREQ=WEEKLY';
-                break;
-            case 'monthly':
-                recurrenceRule = 'FREQ=MONTHLY';
-                break;
-        }
-    }
-    
-    const userAgent = navigator.userAgent.toLowerCase();
-    
-    if (userAgent.includes('iphone') || userAgent.includes('ipad')) {
-        // iOS devices
-        tryiOSCalendars(reminder, title, description, startDateISO, endDateISO, recurrenceRule);
-    } else if (userAgent.includes('android')) {
-        // Android devices
-        tryAndroidCalendars(reminder, title, description, startTimestamp, endTimestamp, recurrenceRule);
-    } else {
-        // Fallback for other mobile devices
-        createAndDownloadICS(reminder, title, description, startDate, endDate);
-    }
-}
-
-function tryiOSCalendars(reminder, title, description, startDateISO, endDateISO, recurrenceRule) {
-    // iOS Calendar app URL scheme
-    const iosCalendarUrl = `calshow:${Math.floor(new Date(reminder.date + 'T' + reminder.time).getTime() / 1000)}`;
-    
-    // Create event data for iOS
-    const eventData = {
-        title: title,
-        startDate: startDateISO,
-        endDate: endDateISO,
-        notes: description,
-        recurrence: recurrenceRule
+    // Set default time based on medicine schedule
+    const defaultTimes = {
+        'morning': '08:00',
+        'afterBreakfast': '09:30',
+        'afternoon': '16:00',
+        'afterDinner': '21:00'
     };
     
-    // Try to open iOS Calendar app
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    iframe.src = iosCalendarUrl;
-    document.body.appendChild(iframe);
-    
-    // Fallback timer
-    setTimeout(() => {
-        document.body.removeChild(iframe);
-        // If calendar didn't open, create ICS file
-        showNotification('📅 Creating calendar file for download...', 'info');
-        createAndDownloadICS(reminder, title, description, 
-            new Date(reminder.date + 'T' + reminder.time), 
-            new Date(new Date(reminder.date + 'T' + reminder.time).getTime() + 15 * 60000)
-        );
-    }, 2000);
-    
-    // Also try webcal protocol for iOS
-    setTimeout(() => {
-        const icsData = generateICSContent(reminder, title, description, startDateISO, endDateISO, recurrenceRule);
-        const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const webcalUrl = url.replace('blob:', 'webcal://');
-        
-        try {
-            window.location.href = webcalUrl;
-        } catch (e) {
-            console.log('Webcal protocol failed, using download method');
-        }
-    }, 500);
-    
-    showNotification('📅 Opening iOS Calendar...', 'success');
-}
-
-function tryAndroidCalendars(reminder, title, description, startTimestamp, endTimestamp, recurrenceRule) {
-    // Android Calendar Intent URL
-    const androidCalendarUrl = `content://com.android.calendar/time/${startTimestamp}`;
-    
-    // Google Calendar Android app
-    const googleCalendarIntent = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
-        `&text=${encodeURIComponent(title)}` +
-        `&dates=${new Date(startTimestamp * 1000).toISOString().replace(/[-:]/g, '').split('.')[0]}Z/` +
-        `${new Date(endTimestamp * 1000).toISOString().replace(/[-:]/g, '').split('.')[0]}Z` +
-        `&details=${encodeURIComponent(description)}` +
-        (recurrenceRule ? `&recur=RRULE:${recurrenceRule}` : '');
-    
-    // Try Android Calendar app first
-    try {
-        const calendarIntent = `intent://calendar/0/#Intent;` +
-            `S.title=${encodeURIComponent(title)};` +
-            `l.beginTime=${startTimestamp * 1000};` +
-            `l.endTime=${endTimestamp * 1000};` +
-            `S.description=${encodeURIComponent(description)};` +
-            `end`;
-        
-        window.location.href = calendarIntent;
-        
-        // Fallback to Google Calendar web
-        setTimeout(() => {
-            window.open(googleCalendarIntent, '_blank');
-        }, 1500);
-        
-    } catch (error) {
-        // Direct fallback to Google Calendar
-        window.open(googleCalendarIntent, '_blank');
-    }
-    
-    // Also create downloadable ICS as backup
-    setTimeout(() => {
-        createAndDownloadICS(reminder, title, description,
-            new Date(startTimestamp * 1000),
-            new Date(endTimestamp * 1000)
-        );
-    }, 3000);
-    
-    showNotification('📅 Opening Android Calendar...', 'success');
-}
-
-function createAndDownloadICS(reminder, title, description, startDate, endDate) {
-    try {
-        const formatICSDate = (date) => {
-            return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-        };
-        
-        const startDateFormatted = formatICSDate(startDate);
-        const endDateFormatted = formatICSDate(endDate);
-        
-        let recurrenceRule = '';
-        if (reminder.repeat !== 'once') {
-            switch (reminder.repeat) {
-                case 'daily':
-                    recurrenceRule = 'RRULE:FREQ=DAILY\n';
-                    break;
-                case 'weekly':
-                    recurrenceRule = 'RRULE:FREQ=WEEKLY\n';
-                    break;
-                case 'monthly':
-                    recurrenceRule = 'RRULE:FREQ=MONTHLY\n';
-                    break;
+    // Find the medicine and its time slot
+    let defaultTime = '09:00';
+    Object.entries(medicineData[person]).forEach(([timeSlot, medicines]) => {
+        medicines.forEach(medicine => {
+            if (medicine.name === medicineName) {
+                defaultTime = defaultTimes[timeSlot] || '09:00';
             }
-        }
-        
-        const icsContent = generateICSContent(reminder, title, description, startDateFormatted, endDateFormatted, recurrenceRule);
-        
-        // Create and download ICS file
-        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        
-        // Try to use the device's default calendar app to open ICS
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `medicine-reminder-${reminder.medicineName.replace(/\s+/g, '-').toLowerCase()}.ics`;
-        
-        // For mobile devices, try to trigger the calendar app
-        if (isMobile()) {
-            // Create a hidden link that opens the ICS file
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Also try to open with calendar MIME type
-            const calendarLink = document.createElement('a');
-            calendarLink.href = url;
-            calendarLink.type = 'text/calendar';
-            calendarLink.rel = 'noopener';
-            calendarLink.target = '_blank';
-            calendarLink.style.display = 'none';
-            document.body.appendChild(calendarLink);
-            calendarLink.click();
-            document.body.removeChild(calendarLink);
-        } else {
-            // Desktop - download the file
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-        
-        URL.revokeObjectURL(url);
-        
-        showNotification('📅 Calendar reminder created! Open the downloaded file to add to your calendar.', 'success');
-        
-    } catch (error) {
-        console.error('Error creating ICS file:', error);
-        showNotification('⚠️ Unable to create calendar reminder. Please add manually.', 'error');
-    }
-}
-
-function generateICSContent(reminder, title, description, startDate, endDate, recurrenceRule) {
-    return [
-        'BEGIN:VCALENDAR',
-        'VERSION:2.0',
-        'PRODID:-//Medicine Tracker//Medicine Reminder//EN',
-        'CALSCALE:GREGORIAN',
-        'METHOD:PUBLISH',
-        'BEGIN:VTIMEZONE',
-        'TZID:' + Intl.DateTimeFormat().resolvedOptions().timeZone,
-        'END:VTIMEZONE',
-        'BEGIN:VEVENT',
-        `UID:${reminder.id}@medicine-tracker.com`,
-        `DTSTART:${startDate}`,
-        `DTEND:${endDate}`,
-        `SUMMARY:${title}`,
-        `DESCRIPTION:${description.replace(/\n/g, '\\n')}`,
-        'LOCATION:Medicine Reminder',
-        `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
-        'STATUS:CONFIRMED',
-        'TRANSP:OPAQUE',
-        recurrenceRule.trim(),
-        'BEGIN:VALARM',
-        'TRIGGER:-PT5M',
-        'DESCRIPTION:Medicine reminder - 5 minutes before',
-        'ACTION:DISPLAY',
-        'END:VALARM',
-        'BEGIN:VALARM',
-        'TRIGGER:PT0S',
-        'DESCRIPTION:Take your medicine now!',
-        'ACTION:DISPLAY',
-        'END:VALARM',
-        'END:VEVENT',
-        'END:VCALENDAR'
-    ].filter(line => line.trim()).join('\r\n');
-}
-
-// Enhanced mobile detection
-function isMobile() {
-    const userAgent = navigator.userAgent.toLowerCase();
-    const mobileKeywords = ['mobile', 'android', 'iphone', 'ipad', 'ipod', 'blackberry', 'windows phone'];
-    
-    return mobileKeywords.some(keyword => userAgent.includes(keyword)) ||
-           /Mobi|Android/i.test(navigator.userAgent) ||
-           (typeof window.orientation !== 'undefined') ||
-           (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
-}
-
-// Alternative method using Web Intents (for modern browsers)
-function tryWebIntentCalendar(reminder, title, description, startDate, endDate) {
-    if ('navigator' in window && 'share' in navigator) {
-        // Use Web Share API for mobile sharing to calendar apps
-        const shareData = {
-            title: title,
-            text: `${description}\n\nDate: ${startDate.toLocaleDateString()}\nTime: ${startDate.toLocaleTimeString()}`,
-            url: window.location.href
-        };
-        
-        navigator.share(shareData).then(() => {
-            showNotification('📅 Shared reminder details!', 'success');
-        }).catch((error) => {
-            console.log('Web Share failed:', error);
-            // Fallback to ICS download
-            createAndDownloadICS(reminder, title, description, startDate, endDate);
         });
-    } else {
-        // Fallback for browsers without Web Share API
-        createAndDownloadICS(reminder, title, description, startDate, endDate);
-    }
+    });
+    
+    timeInput.value = defaultTime;
 }
 
-// Enhanced notification function with native calendar integration
 function setReminder(person, medicineName) {
     const date = document.getElementById('reminderDate').value;
     const time = document.getElementById('reminderTime').value;
@@ -1276,13 +1069,392 @@ function setReminder(person, medicineName) {
     // Save reminder
     saveReminder(reminder);
     
-    // Add to device calendar - this will now directly integrate with native apps
+    // Schedule notification
+    scheduleNotification(reminder);
+    
+    // Add to device calendar
     addToCalendar(reminder);
     
-    showNotification(`🔔 Reminder created for ${medicineName} on ${formatDate(date)} at ${time}`);
+    showNotification(`🔔 Reminder set for ${medicineName} on ${formatDate(date)} at ${time}`);
     
     // Refresh reminder list
     loadExistingReminders(person, medicineName);
+}
+
+// Add this new function after the setReminder function
+function addToCalendar(reminder) {
+    try {
+        const startDate = new Date(`${reminder.date}T${reminder.time}`);
+        const endDate = new Date(startDate.getTime() + 15 * 60000); // 15 minutes duration
+        
+        // Format dates for calendar URL (YYYYMMDDTHHMMSSZ format)
+        const formatDateForCalendar = (date) => {
+            return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        };
+        
+        const startDateFormatted = formatDateForCalendar(startDate);
+        const endDateFormatted = formatDateForCalendar(endDate);
+        
+        // Create calendar event details
+        const title = `💊 Medicine: ${reminder.medicineName}`;
+        const description = `Time to take ${reminder.medicineName}${reminder.message ? '\n\nNote: ' + reminder.message : ''}`;
+        const location = 'Medicine Reminder';
+        
+        // Create Google Calendar URL
+        const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+            `&text=${encodeURIComponent(title)}` +
+            `&dates=${startDateFormatted}/${endDateFormatted}` +
+            `&details=${encodeURIComponent(description)}` +
+            `&location=${encodeURIComponent(location)}`;
+        
+        // For recurring events
+        let recurrenceRule = '';
+        if (reminder.repeat !== 'once') {
+            switch (reminder.repeat) {
+                case 'daily':
+                    recurrenceRule = '&recur=RRULE:FREQ=DAILY';
+                    break;
+                case 'weekly':
+                    recurrenceRule = '&recur=RRULE:FREQ=WEEKLY';
+                    break;
+                case 'monthly':
+                    recurrenceRule = '&recur=RRULE:FREQ=MONTHLY';
+                    break;
+            }
+        }
+        
+        const finalUrl = googleCalendarUrl + recurrenceRule;
+        
+        // Try to open calendar app or fallback to web
+        if (isMobile()) {
+            // Try to open native calendar app first
+            const calendarScheme = `calendarapp://new?title=${encodeURIComponent(title)}&startDate=${startDateFormatted}&endDate=${endDateFormatted}&notes=${encodeURIComponent(description)}`;
+            
+            // Create a temporary link to test if calendar app opens
+            const tempLink = document.createElement('a');
+            tempLink.href = calendarScheme;
+            tempLink.style.display = 'none';
+            document.body.appendChild(tempLink);
+            
+            // Try calendar app, fallback to Google Calendar
+            setTimeout(() => {
+                document.body.removeChild(tempLink);
+                window.open(finalUrl, '_blank');
+            }, 1000);
+            
+            try {
+                tempLink.click();
+            } catch (e) {
+                window.open(finalUrl, '_blank');
+            }
+        } else {
+            // Desktop - open Google Calendar
+            window.open(finalUrl, '_blank');
+        }
+        
+        showNotification('📅 Opening calendar to add reminder...', 'success');
+        
+    } catch (error) {
+        console.error('Error adding to calendar:', error);
+        // Fallback - create ICS file
+        createICSFile(reminder);
+    }
+}
+
+// Add this function for ICS file creation (alternative method)
+function createICSFile(reminder) {
+    try {
+        const startDate = new Date(`${reminder.date}T${reminder.time}`);
+        const endDate = new Date(startDate.getTime() + 15 * 60000);
+        
+        // Format date for ICS (YYYYMMDDTHHMMSSZ)
+        const formatICSDate = (date) => {
+            return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        };
+        
+        let recurrenceRule = '';
+        if (reminder.repeat !== 'once') {
+            switch (reminder.repeat) {
+                case 'daily':
+                    recurrenceRule = 'RRULE:FREQ=DAILY\n';
+                    break;
+                case 'weekly':
+                    recurrenceRule = 'RRULE:FREQ=WEEKLY\n';
+                    break;
+                case 'monthly':
+                    recurrenceRule = 'RRULE:FREQ=MONTHLY\n';
+                    break;
+            }
+        }
+        
+        const icsContent = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//Medicine Tracker//Medicine Reminder//EN',
+            'BEGIN:VEVENT',
+            `UID:${reminder.id}@medicine-tracker.com`,
+            `DTSTART:${formatICSDate(startDate)}`,
+            `DTEND:${formatICSDate(endDate)}`,
+            `SUMMARY:💊 Medicine: ${reminder.medicineName}`,
+            `DESCRIPTION:Time to take ${reminder.medicineName}${reminder.message ? '\\n\\nNote: ' + reminder.message : ''}`,
+            'LOCATION:Medicine Reminder',
+            `DTSTAMP:${formatICSDate(new Date())}`,
+            recurrenceRule,
+            'BEGIN:VALARM',
+            'TRIGGER:-PT5M',
+            'DESCRIPTION:Medicine reminder',
+            'ACTION:DISPLAY',
+            'END:VALARM',
+            'END:VEVENT',
+            'END:VCALENDAR'
+        ].join('\n');
+        
+        // Create and download ICS file
+        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `medicine-reminder-${reminder.medicineName.replace(/\s+/g, '-').toLowerCase()}.ics`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showNotification('📅 Calendar file downloaded! Open it to add to your calendar app.', 'success');
+        
+    } catch (error) {
+        console.error('Error creating ICS file:', error);
+        showNotification('⚠️ Unable to create calendar reminder. Please add manually.', 'error');
+    }
+}
+ 
+function saveReminder(reminder) {
+    try {
+        let reminders = [];
+        
+        if (storageAvailable) {
+            const stored = localStorage.getItem('medicine_reminders');
+            if (stored) {
+                reminders = JSON.parse(stored);
+            }
+        } else if (window.medicineReminders) {
+            reminders = JSON.parse(window.medicineReminders);
+        }
+        
+        reminders.push(reminder);
+        
+        if (storageAvailable) {
+            localStorage.setItem('medicine_reminders', JSON.stringify(reminders));
+        } else {
+            window.medicineReminders = JSON.stringify(reminders);
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error saving reminder:', error);
+        return false;
+    }
+}
+
+function loadReminders() {
+    try {
+        if (storageAvailable) {
+            const stored = localStorage.getItem('medicine_reminders');
+            return stored ? JSON.parse(stored) : [];
+        } else if (window.medicineReminders) {
+            return JSON.parse(window.medicineReminders);
+        }
+        return [];
+    } catch (error) {
+        console.error('Error loading reminders:', error);
+        return [];
+    }
+}
+
+function loadExistingReminders(person, medicineName) {
+    const remindersList = document.getElementById('remindersList');
+    const allReminders = loadReminders();
+    const medicineReminders = allReminders.filter(r => 
+        r.person === person && 
+        r.medicineName === medicineName && 
+        r.active &&
+        new Date(`${r.date}T${r.time}`) > new Date()
+    );
+    
+    if (medicineReminders.length === 0) {
+        remindersList.innerHTML = '<p style="color: #6B7280; text-align: center; padding: 20px;">No active reminders</p>';
+        return;
+    }
+    
+    remindersList.innerHTML = medicineReminders.map(reminder => `
+        <div style="background: linear-gradient(45deg, #f0f9ff, #e0f2fe); padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid #0ea5e9;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong style="color: #0369a1;">📅 ${formatDate(reminder.date)} at ${reminder.time}</strong>
+                    <p style="color: #64748b; margin: 5px 0;">${reminder.repeat !== 'once' ? `Repeats: ${reminder.repeat}` : 'One-time reminder'}</p>
+                    ${reminder.message ? `<p style="color: #475569; font-style: italic;">"${reminder.message}"</p>` : ''}
+                </div>
+                <button onclick="deleteReminder(${reminder.id}, '${person}', '${medicineName}')" 
+                        style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 15px; cursor: pointer; font-size: 12px;">
+                    🗑️ Delete
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function deleteReminder(reminderId, person, medicineName) {
+    try {
+        let reminders = loadReminders();
+        reminders = reminders.filter(r => r.id !== reminderId);
+        
+        if (storageAvailable) {
+            localStorage.setItem('medicine_reminders', JSON.stringify(reminders));
+        } else {
+            window.medicineReminders = JSON.stringify(reminders);
+        }
+        
+        showNotification('🗑️ Reminder deleted successfully');
+        loadExistingReminders(person, medicineName);
+        
+        return true;
+    } catch (error) {
+        console.error('Error deleting reminder:', error);
+        showNotification('⚠️ Error deleting reminder', 'error');
+        return false;
+    }
+}
+
+function scheduleNotification(reminder) {
+    const reminderTime = new Date(`${reminder.date}T${reminder.time}`);
+    const now = new Date();
+    const timeUntilReminder = reminderTime.getTime() - now.getTime();
+    
+    if (timeUntilReminder > 0) {
+        setTimeout(() => {
+            showReminderNotification(reminder);
+            
+            // Handle recurring reminders
+            if (reminder.repeat !== 'once') {
+                scheduleRecurringReminder(reminder);
+            }
+        }, timeUntilReminder);
+    }
+}
+
+function scheduleRecurringReminder(reminder) {
+    const nextDate = calculateNextReminderDate(reminder.date, reminder.repeat);
+    const newReminder = {
+        ...reminder,
+        id: Date.now(),
+        date: nextDate
+    };
+    
+    saveReminder(newReminder);
+    scheduleNotification(newReminder);
+}
+
+function calculateNextReminderDate(currentDate, repeat) {
+    const date = new Date(currentDate);
+    
+    switch (repeat) {
+        case 'daily':
+            date.setDate(date.getDate() + 1);
+            break;
+        case 'weekly':
+            date.setDate(date.getDate() + 7);
+            break;
+        case 'monthly':
+            date.setMonth(date.getMonth() + 1);
+            break;
+    }
+    
+    return date.toISOString().split('T')[0];
+}
+
+function showReminderNotification(reminder) {
+    const message = `💊 Medicine Reminder: ${reminder.medicineName}${reminder.message ? '\n' + reminder.message : ''}`;
+    
+    // Show in-app notification
+    showNotification(message);
+    
+    // Try to show browser notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Medicine Reminder', {
+            body: `Time to take ${reminder.medicineName}${reminder.message ? '\n' + reminder.message : ''}`,
+            icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzQ2OTJFNSI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iNSIgZmlsbD0iIzFGQzc0MSIvPjwvc3ZnPg==',
+            tag: `medicine-${reminder.id}`
+        });
+    }
+    
+    // Play notification sound if available
+    if (window.AudioContext || window.webkitAudioContext) {
+        playNotificationSound();
+    }
+}
+
+function playNotificationSound() {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (error) {
+        console.error('Error playing notification sound:', error);
+    }
+}
+
+function closeCalendarModal() {
+    const modal = document.getElementById('calendarModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+    });
+}
+
+function initializeReminders() {
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                showNotification('🔔 Notifications enabled! You will receive medicine reminders.');
+            }
+        });
+    }
+    
+    // Load and schedule existing reminders
+    const reminders = loadReminders();
+    const activeReminders = reminders.filter(r => 
+        r.active && 
+        new Date(`${r.date}T${r.time}`) > new Date()
+    );
+    
+    activeReminders.forEach(reminder => {
+        scheduleNotification(reminder);
+    });
+    
+    console.log(`Scheduled ${activeReminders.length} active reminders`);
 }
 
     function resetAllStock() {
