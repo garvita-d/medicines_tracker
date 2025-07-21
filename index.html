@@ -637,8 +637,20 @@
                     Next reminder: <span id="nextReminderTime">--</span>
                 </div>
             </div>
+<div class="alert" style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); color: #856404; border-color: #ffc107;">
+    <span class="alert-icon">🔄</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div>
+            <strong>Reset Medicine Data:</strong> Click to reset all medicine stocks to their original values.
+            <br><small>Use this if you want to start fresh with full stock counts.</small>
         </div>
-
+        <button class="setup-button" onclick="resetAllMedicineData()" style="margin-left: 15px; background: #ffc107; color: #212529;">
+            🔄 Reset All Stocks
+        </button>
+    </div>
+</div>
+        </div>
+            
         <div id="father" class="tab-content">
             <div class="person-section">
                 <div class="person-header">
@@ -729,38 +741,86 @@
         let reminderIntervals = [];
 
         // Medicine data structure with persistent storage keys
-        const medicineData = {
-            father: {
-                morningBefore: [
-                    { name: "Maxi PhD", dosage: "30 days tablets", stock: 30, originalStock: 30, storageKey: "father_morningBefore_0" }
-                ],
-                morningAfter: [
-                    { name: "Metolol MF", dosage: "60mg - 30 days", stock: 30, originalStock: 30, storageKey: "father_morningAfter_0" },
-                    { name: "Pilclop", dosage: "75mg - 30 days", stock: 30, originalStock: 30, storageKey: "father_morningAfter_1" },
-                    { name: "Cordarone", dosage: "30 days", stock: 30, originalStock: 30, storageKey: "father_morningAfter_2" },
-                    { name: "Orofer XT", dosage: "30 tablets", stock: 30, originalStock: 30, storageKey: "father_morningAfter_3" },
-                    { name: "Hyqvit", dosage: "30 tablets", stock: 30, originalStock: 30, storageKey: "father_morningAfter_4" }
-                ],
-                afternoon: [
-                    { name: "Acitrom", dosage: "1mg/2mg alternate days - 30 days", stock: 30, originalStock: 30, storageKey: "father_afternoon_0" }
-                ],
-                night: [
-                    { name: "Rotin F", dosage: "30 tablets", stock: 30, originalStock: 30, storageKey: "father_night_0" },
-                    { name: "Telmiford", dosage: "40mg - 30 tablets", stock: 30, originalStock: 30, storageKey: "father_night_1" }
-                ]
-            },
-            mother: {
-                morning: [
-                    { name: "Telzox H", dosage: "30 tablets", stock: 30, originalStock: 30, storageKey: "mother_morning_0" },
-                    { name: "Cinod", dosage: "10mg - 1 tablet (Morning dose)", stock: 60, originalStock: 60, storageKey: "mother_morning_1" },
-                    { name: "Zavamet", dosage: "50/500 - 1 tablet (Morning dose)", stock: 60, originalStock: 60, storageKey: "mother_morning_2" }
-                ],
-                night: [
-                    { name: "Cinod", dosage: "10mg - 1 tablet (Evening dose)", stock: 60, originalStock: 60, storageKey: "mother_night_0" },
-                    { name: "Zavamet", dosage: "50/500 - 1 tablet (Evening dose)", stock: 60, originalStock: 60, storageKey: "mother_night_1" }
-                ]
-            }
-        };
+let medicineData = loadMedicineData() || {
+    father: {
+        morningBefore: [
+            { name: "Maxi PhD", dosage: "30 days tablets", stock: 30, originalStock: 30 }
+        ],
+        morningAfter: [
+            { name: "Metolol MF", dosage: "60mg - 30 days", stock: 30, originalStock: 30 },
+            { name: "Pilclop", dosage: "75mg - 30 days", stock: 30, originalStock: 30 },
+            { name: "Cordarone", dosage: "30 days", stock: 30, originalStock: 30 },
+            { name: "Orofer XT", dosage: "30 tablets", stock: 30, originalStock: 30 },
+            { name: "Hyqvit", dosage: "30 tablets", stock: 30, originalStock: 30 }
+        ],
+        afternoon: [
+            { name: "Acitrom", dosage: "1mg/2mg alternate days - 30 days", stock: 30, originalStock: 30 }
+        ],
+        night: [
+            { name: "Rotin F", dosage: "30 tablets", stock: 30, originalStock: 30 },
+            { name: "Telmiford", dosage: "40mg - 30 tablets", stock: 30, originalStock: 30 }
+        ]
+    },
+    mother: {
+        morning: [
+            { name: "Telzox H", dosage: "30 tablets", stock: 30, originalStock: 30 },
+            { name: "Cinod", dosage: "10mg - 1 tablet (Morning dose)", stock: 60, originalStock: 60 },
+            { name: "Zavamet", dosage: "50/500 - 1 tablet (Morning dose)", stock: 60, originalStock: 60 }
+        ],
+        night: [
+            { name: "Cinod", dosage: "10mg - 1 tablet (Evening dose)", stock: 60, originalStock: 60 },
+            { name: "Zavamet", dosage: "50/500 - 1 tablet (Evening dose)", stock: 60, originalStock: 60 }
+        ]
+    }
+};
+
+// Load medicine data from memory
+function loadMedicineData() {
+    try {
+        const saved = window.medicineDataStore;
+        if (saved) {
+            console.log("Loading saved medicine data");
+            return saved;
+        }
+    } catch (error) {
+        console.error("Error loading medicine data:", error);
+    }
+    return null;
+}
+
+// Save medicine data to memory
+function saveMedicineData() {
+    try {
+        window.medicineDataStore = medicineData;
+        console.log("Medicine data saved");
+    } catch (error) {
+        console.error("Error saving medicine data:", error);
+    }
+}
+
+// Reset all medicine data to original values
+function resetAllMedicineData() {
+    if (confirm("Are you sure you want to reset ALL medicine stocks to their original values? This cannot be undone.")) {
+        Object.keys(medicineData).forEach(person => {
+            Object.keys(medicineData[person]).forEach(timeSlot => {
+                medicineData[person][timeSlot].forEach(medicine => {
+                    medicine.stock = medicine.originalStock;
+                });
+            });
+        });
+        
+        // Save the reset data
+        saveMedicineData();
+        
+        // Refresh the display
+        populateMedicineSchedules();
+        generateStockAlerts();
+        
+        showNotification("✅ All medicine stocks have been reset to original values!");
+        speak("All medicine stocks have been reset to their original values.");
+    }
+}
+
 
         // Medicine reminder times (24-hour format)
         const reminderTimes = [
@@ -855,6 +915,7 @@
                 // Check for immediate low stock alerts
                 checkLowStockReminders();
             }, 2000);
+            saveMedicineData(); // Save initial data
         }
 
         // Check for low stock reminders
@@ -1160,7 +1221,9 @@ async function processVoiceCommand(command) {
             container.innerHTML = '';
 
             medicines.forEach((medicine, index) => {
-                const medicineDiv = document.createElement('div');
+                if (!medicine.storageKey) {
+                    medicine.storageKey = `${person}_${elementId}_${index}_${medicine.name.replace(/\s+/g, '_')}`;
+        }
                 const isTakenToday = wasTakenToday(medicine.storageKey);
                 const isLowStock = medicine.stock <= 5;
                 
@@ -1225,6 +1288,7 @@ async function processVoiceCommand(command) {
                         if (medicine.storageKey === storageKey && medicine.stock > 0) {
                             medicine.stock--;
                             saveToStorage(medicine.storageKey + '_stock', medicine.stock);
+                            saveMedicineData();
                         }
                     });
                 });
@@ -1239,6 +1303,7 @@ async function processVoiceCommand(command) {
                         if (medicine.storageKey === storageKey && medicine.stock < medicine.originalStock) {
                             medicine.stock++;
                             saveToStorage(medicine.storageKey + '_stock', medicine.stock);
+                            saveMedicineData();
                         }
                     });
                 });
@@ -1252,6 +1317,7 @@ async function processVoiceCommand(command) {
                         if (medicine.storageKey === storageKey) {
                             medicine.stock += amount;
                             saveToStorage(medicine.storageKey + '_stock', medicine.stock);
+                            saveMedicineData();
                             populateMedicineSchedules();
                             generateStockAlerts();
                             speak(`Added ${amount} tablets to ${medicine.name}. New stock: ${medicine.stock}`);
@@ -1391,7 +1457,7 @@ async function processVoiceCommand(command) {
         function setupWebReminders() {
             alert('Web reminders are already active! Keep this tab open or install as an app for notifications.');
         }
-        
+
 function downloadCalendar() {
     // Try to use Web Calendar API if available
     if ('calendar' in navigator) {
