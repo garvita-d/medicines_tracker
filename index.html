@@ -517,26 +517,26 @@
                     { name: "Metolol MF 60mg", dose: "1 tablet at each timeslot", stock: 30, originalStock: 30, lastTaken: null },
                     { name: "Pilclop 75mg", dose: "1 tablet at each timeslot",  stock: 30, originalStock: 30, lastTaken: null },
                     { name: "Cordarone", dose: "1 tablet at each timeslot", stock: 30, originalStock: 30, lastTaken: null },
-                    { name: "Orofer XT", dose: "1 tablet at each timeslot", timing: "", stock: 30, originalStock: 30, lastTaken: null },
-                    { name: "Hyqvit", dose: "1 tablet at each timeslot", timing: "", stock: 30, originalStock: 30, lastTaken: null }
+                    { name: "Orofer XT", dose: "1 tablet at each timeslot", stock: 30, originalStock: 30, lastTaken: null },
+                    { name: "Hyqvit", dose: "1 tablet at each timeslot", stock: 30, originalStock: 30, lastTaken: null }
                 ],
                 afternoon: [
                     { name: "Acitrom", dose: "1mg/2mg alternate days", timing: "4pm", stock: 30, originalStock: 30, lastTaken: null }
                 ],
                 afterDinner: [
-                    { name: "Rotin F", dose: "1 tablet at each timeslot", timing: "", stock: 30, originalStock: 30, lastTaken: null },
-                    { name: "Telmiford 40mg", dose: "1 tablet at each timeslot", timing: "", stock: 30, originalStock: 30, lastTaken: null }
+                    { name: "Rotin F", dose: "1 tablet at each timeslot", stock: 30, originalStock: 30, lastTaken: null },
+                    { name: "Telmiford 40mg", dose: "1 tablet at each timeslot", stock: 30, originalStock: 30, lastTaken: null }
                 ]
             },
             mother: {
                 afterBreakfast: [
-                    { name: "Telzox H", dose: "1 tablet at each timeslot", timing: "", stock: 30, originalStock: 30, lastTaken: null },
-                    { name: "Cinod 10mg", dose: "1 tablet at each timeslot", timing: "After breakfast and dinner", stock: 60, originalStock: 60, lastTaken: null },
-                    { name: "Zavamet 50/500", dose: "1 tablet at each timeslot", timing: "After breakfast and dinner", stock: 60, originalStock: 60, lastTaken: null }
+                    { name: "Telzox H", dose: "1 tablet at each timeslot", stock: 30, originalStock: 30, lastTaken: null },
+                    { name: "Cinod 10mg", dose: "1 tablet at each timeslot",  stock: 60, originalStock: 60, lastTaken: null },
+                    { name: "Zavamet 50/500", dose: "1 tablet at each timeslot", stock: 60, originalStock: 60, lastTaken: null }
                 ],
                 afterDinner: [
-                    { name: "Cinod 10mg", dose: "1 tablet at each timeslot", timing: "After breakfast and dinner", stock: 60, originalStock: 60, lastTaken: null },
-                    { name: "Zavamet 50/500", dose: "1 tablet at each timeslot", timing: "After breakfast and dinner", stock: 60, originalStock: 60, lastTaken: null }
+                    { name: "Cinod 10mg", dose: "1 tablet at each timeslot", stock: 60, originalStock: 60, lastTaken: null },
+                    { name: "Zavamet 50/500", dose: "1 tablet at each timeslot", stock: 60, originalStock: 60, lastTaken: null }
                 ]
             }
         };
@@ -1072,12 +1072,162 @@ function setReminder(person, medicineName) {
     // Schedule notification
     scheduleNotification(reminder);
     
+    // Add to device calendar
+    addToCalendar(reminder);
+    
     showNotification(`🔔 Reminder set for ${medicineName} on ${formatDate(date)} at ${time}`);
     
     // Refresh reminder list
     loadExistingReminders(person, medicineName);
 }
 
+// Add this new function after the setReminder function
+function addToCalendar(reminder) {
+    try {
+        const startDate = new Date(`${reminder.date}T${reminder.time}`);
+        const endDate = new Date(startDate.getTime() + 15 * 60000); // 15 minutes duration
+        
+        // Format dates for calendar URL (YYYYMMDDTHHMMSSZ format)
+        const formatDateForCalendar = (date) => {
+            return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        };
+        
+        const startDateFormatted = formatDateForCalendar(startDate);
+        const endDateFormatted = formatDateForCalendar(endDate);
+        
+        // Create calendar event details
+        const title = `💊 Medicine: ${reminder.medicineName}`;
+        const description = `Time to take ${reminder.medicineName}${reminder.message ? '\n\nNote: ' + reminder.message : ''}`;
+        const location = 'Medicine Reminder';
+        
+        // Create Google Calendar URL
+        const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+            `&text=${encodeURIComponent(title)}` +
+            `&dates=${startDateFormatted}/${endDateFormatted}` +
+            `&details=${encodeURIComponent(description)}` +
+            `&location=${encodeURIComponent(location)}`;
+        
+        // For recurring events
+        let recurrenceRule = '';
+        if (reminder.repeat !== 'once') {
+            switch (reminder.repeat) {
+                case 'daily':
+                    recurrenceRule = '&recur=RRULE:FREQ=DAILY';
+                    break;
+                case 'weekly':
+                    recurrenceRule = '&recur=RRULE:FREQ=WEEKLY';
+                    break;
+                case 'monthly':
+                    recurrenceRule = '&recur=RRULE:FREQ=MONTHLY';
+                    break;
+            }
+        }
+        
+        const finalUrl = googleCalendarUrl + recurrenceRule;
+        
+        // Try to open calendar app or fallback to web
+        if (isMobile()) {
+            // Try to open native calendar app first
+            const calendarScheme = `calendarapp://new?title=${encodeURIComponent(title)}&startDate=${startDateFormatted}&endDate=${endDateFormatted}&notes=${encodeURIComponent(description)}`;
+            
+            // Create a temporary link to test if calendar app opens
+            const tempLink = document.createElement('a');
+            tempLink.href = calendarScheme;
+            tempLink.style.display = 'none';
+            document.body.appendChild(tempLink);
+            
+            // Try calendar app, fallback to Google Calendar
+            setTimeout(() => {
+                document.body.removeChild(tempLink);
+                window.open(finalUrl, '_blank');
+            }, 1000);
+            
+            try {
+                tempLink.click();
+            } catch (e) {
+                window.open(finalUrl, '_blank');
+            }
+        } else {
+            // Desktop - open Google Calendar
+            window.open(finalUrl, '_blank');
+        }
+        
+        showNotification('📅 Opening calendar to add reminder...', 'success');
+        
+    } catch (error) {
+        console.error('Error adding to calendar:', error);
+        // Fallback - create ICS file
+        createICSFile(reminder);
+    }
+}
+
+// Add this function for ICS file creation (alternative method)
+function createICSFile(reminder) {
+    try {
+        const startDate = new Date(`${reminder.date}T${reminder.time}`);
+        const endDate = new Date(startDate.getTime() + 15 * 60000);
+        
+        // Format date for ICS (YYYYMMDDTHHMMSSZ)
+        const formatICSDate = (date) => {
+            return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        };
+        
+        let recurrenceRule = '';
+        if (reminder.repeat !== 'once') {
+            switch (reminder.repeat) {
+                case 'daily':
+                    recurrenceRule = 'RRULE:FREQ=DAILY\n';
+                    break;
+                case 'weekly':
+                    recurrenceRule = 'RRULE:FREQ=WEEKLY\n';
+                    break;
+                case 'monthly':
+                    recurrenceRule = 'RRULE:FREQ=MONTHLY\n';
+                    break;
+            }
+        }
+        
+        const icsContent = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//Medicine Tracker//Medicine Reminder//EN',
+            'BEGIN:VEVENT',
+            `UID:${reminder.id}@medicine-tracker.com`,
+            `DTSTART:${formatICSDate(startDate)}`,
+            `DTEND:${formatICSDate(endDate)}`,
+            `SUMMARY:💊 Medicine: ${reminder.medicineName}`,
+            `DESCRIPTION:Time to take ${reminder.medicineName}${reminder.message ? '\\n\\nNote: ' + reminder.message : ''}`,
+            'LOCATION:Medicine Reminder',
+            `DTSTAMP:${formatICSDate(new Date())}`,
+            recurrenceRule,
+            'BEGIN:VALARM',
+            'TRIGGER:-PT5M',
+            'DESCRIPTION:Medicine reminder',
+            'ACTION:DISPLAY',
+            'END:VALARM',
+            'END:VEVENT',
+            'END:VCALENDAR'
+        ].join('\n');
+        
+        // Create and download ICS file
+        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `medicine-reminder-${reminder.medicineName.replace(/\s+/g, '-').toLowerCase()}.ics`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showNotification('📅 Calendar file downloaded! Open it to add to your calendar app.', 'success');
+        
+    } catch (error) {
+        console.error('Error creating ICS file:', error);
+        showNotification('⚠️ Unable to create calendar reminder. Please add manually.', 'error');
+    }
+}
+ 
 function saveReminder(reminder) {
     try {
         let reminders = [];
