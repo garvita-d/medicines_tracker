@@ -427,11 +427,11 @@
         </div>
 
         <div id="father" class="person-section active">
-            <!-- Father's medicines will be populated by JavaScript -->
+            <!-- Father's medicines populated by JavaScript -->
         </div>
 
         <div id="mother" class="person-section">
-            <!-- Mother's medicines will be populated by JavaScript -->
+            <!-- Mother's medicines populated by JavaScript -->
         </div>
 
         <div id="chat" class="person-section">
@@ -768,10 +768,10 @@
             fatherSection.innerHTML = '';
 
             const timeSlots = [
-                { key: 'morning', title: '🌅 Morning (Before Breakfast)', icon: '🌅' },
-                { key: 'afterBreakfast', title: '🥞 After Breakfast', icon: '🥞' },
-                { key: 'afternoon', title: '☀️ Afternoon (4 PM)', icon: '☀️' },
-                { key: 'afterDinner', title: '🌙 After Dinner', icon: '🌙' }
+                { key: 'morning', title: 'Morning (Before Breakfast)', icon: '🌅' },
+                { key: 'afterBreakfast', title: 'After Breakfast', icon: '🥞' },
+                { key: 'afternoon', title: 'Afternoon (4 PM)', icon: '☀️' },
+                { key: 'afterDinner', title: 'After Dinner', icon: '🌙' }
             ];
 
             timeSlots.forEach(slot => {
@@ -838,8 +838,8 @@
         motherSection.innerHTML = '';
 
         const timeSlots = [
-            { key: 'afterBreakfast', title: '🥞 After Breakfast', icon: '🥞' },
-            { key: 'afterDinner', title: '🌙 After Dinner', icon: '🌙' }
+            { key: 'afterBreakfast', title: 'After Breakfast', icon: '🥞' },
+            { key: 'afterDinner', title: 'After Dinner', icon: '🌙' }
         ];
 
         timeSlots.forEach(slot => {
@@ -906,13 +906,13 @@
         
         // Check if already taken today
         if (wasTakenToday(medicine.lastTaken)) {
-            showNotification('💊 This medicine was already taken today!', 'error');
+            showNotification(' This medicine was already taken today!', 'error');
             return;
         }
         
         // Check stock
         if (medicine.stock <= 0) {
-            showNotification('❌ Out of stock! Please refill this medicine.', 'error');
+            showNotification('Out of stock! Please refill this medicine.', 'error');
             return;
         }
         
