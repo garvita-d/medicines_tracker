@@ -1106,7 +1106,7 @@ function isMobileDevice() {
            window.matchMedia('(max-width: 768px)').matches;
 }
 
-// MOBILE CALENDAR FLOW
+// MOBILE CALENDAR FLOW - Updated with Outlook instead of duplicate Google
 function showMobileCalendarFlow(reminder) {
     const modal = document.createElement('div');
     modal.style.cssText = `
@@ -1126,6 +1126,11 @@ function showMobileCalendarFlow(reminder) {
                 <button onclick="openGoogleCalendarDirect(${JSON.stringify(reminder).replace(/"/g, '&quot;')})" 
                         style="background: linear-gradient(45deg, #4285f4, #34a853); color: white; border: none; padding: 18px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 16px;">
                     🌐 Google Calendar (Quick)
+                </button>
+                
+                <button onclick="openOutlookCalendar(${JSON.stringify(reminder).replace(/"/g, '&quot;')})" 
+                        style="background: linear-gradient(45deg, #0078d4, #106ebe); color: white; border: none; padding: 18px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 16px;">
+                    📧 Outlook Calendar
                 </button>
                 
                 <button onclick="createImprovedICS(${JSON.stringify(reminder).replace(/"/g, '&quot;')})" 
@@ -1150,7 +1155,7 @@ function showMobileCalendarFlow(reminder) {
     window.currentModal = modal;
 }
 
-// DESKTOP CALENDAR FLOW
+// DESKTOP CALENDAR FLOW - Already has the correct options
 function showDesktopCalendarFlow(reminder) {
     const modal = document.createElement('div');
     modal.style.cssText = `
