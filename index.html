@@ -1026,7 +1026,8 @@
             document.getElementById('voiceStatus').textContent = message;
         }
 
-        / Enhanced Voice Command Processing with Health Knowledge
+        
+// Enhanced Voice Command Processing with Health Knowledge
 function processVoiceCommand(command) {
     const lowerCommand = command.toLowerCase();
     let response = '';
@@ -1177,6 +1178,7 @@ function processVoiceCommand(command) {
     document.getElementById('voiceResponse').textContent = response;
     speak(response);
 }
+
 
         function speak(text) {
             if (speechSynthesis && speechSynthesis.speaking) {
