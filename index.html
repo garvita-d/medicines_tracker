@@ -387,17 +387,17 @@
         </div>
 
         <div class="header">
-            <h1>Medicine Reminder System</h1>
+            <h1>💊 Medicine Reminder System</h1>
             <p>Never miss your medication again!</p>
             <div class="data-info" id="dataInfo">
-                Data persists across sessions • Last updated: <span id="lastUpdate">Never</span>
+                📊 Data persists across sessions • Last updated: <span id="lastUpdate">Never</span>
             </div>
         </div>
 
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('father')">Father</button>
-            <button class="tab" onclick="switchTab('mother')">Mother</button>
-            <button class="tab" onclick="switchTab('chat')">Voice Assistant</button>
+            <button class="tab active" onclick="switchTab('father')">👨‍⚕️ Father</button>
+            <button class="tab" onclick="switchTab('mother')">👩‍⚕️ Mother</button>
+            <button class="tab" onclick="switchTab('chat')">🤖 Voice Assistant</button>
         </div>
 
         <div id="father" class="person-section active">
@@ -410,14 +410,14 @@
 
         <div id="chat" class="person-section">
             <div class="time-slot">
-                <h3>Voice Assistant</h3>
+                <h3>🤖 Voice Assistant</h3>
                 <p>Click the voice button to interact with your medicine assistant. You can:</p>
                 <ul style="margin: 20px 0; color: #6B7280; line-height: 1.6;">
-                    <li>Check medicine stock levels</li>
-                    <li>Ask about dosage information</li>
-                    <li>Get reminders for specific medicines</li>
-                    <li>Inquire about medicine interactions</li>
-                    <li>Get general medical advice</li>
+                    <li>• Check medicine stock levels</li>
+                    <li>• Ask about dosage information</li>
+                    <li>• Get reminders for specific medicines</li>
+                    <li>• Inquire about medicine interactions</li>
+                    <li>• Get general medical advice</li>
                 </ul>
                 <div style="background: linear-gradient(45deg, #f0f9ff, #e0f2fe); padding: 20px; border-radius: 15px; margin-top: 20px;">
                     <h4 style="color: #0369a1; margin-bottom: 10px;">Example Commands:</h4>
@@ -433,7 +433,7 @@
     </div>
 
     <button class="voice-assistant" onclick="toggleVoiceAssistant()" id="voiceBtn">🎤</button>
-    <button class="reset-btn" onclick="resetAllStock()">Reset Stock</button>
+    <button class="reset-btn" onclick="resetAllStock()">🔄 Reset Stock</button>
 
     <div class="voice-output" id="voiceOutput">
         <h3>🎤 Voice Assistant</h3>
@@ -451,14 +451,14 @@
         const originalMedicineData = {
             father: {
                 morning: [
-                    { name: "Maxi PhD", dose: "30 days", timing: "Before breakfast", stock: 30, originalStock: 30, lastTaken: null }
+                    { name: "Maxi PhD", dose: "30 days tablets", timing: "Before breakfast", stock: 30, originalStock: 30, lastTaken: null }
                 ],
                 afterBreakfast: [
-                    { name: "Metolol MF", dose: "60mg", timing: "30 days", stock: 30, originalStock: 30, lastTaken: null },
-                    { name: "Pilclop", dose: "75mg", timing: "30 days", stock: 30, originalStock: 30, lastTaken: null },
-                    { name: "Cordarone", dose: "30 days", timing: "", stock: 30, originalStock: 30, lastTaken: null },
-                    { name: "Orofer XT", dose: "30 days", timing: "", stock: 30, originalStock: 30, lastTaken: null },
-                    { name: "Hyqvit", dose: "30 days", timing: "", stock: 30, originalStock: 30, lastTaken: null }
+                    { name: "Metolol MF", dose: "60mg", timing: "30 days tablets", stock: 30, originalStock: 30, lastTaken: null },
+                    { name: "Pilclop", dose: "75mg", timing: "30 days tablets", stock: 30, originalStock: 30, lastTaken: null },
+                    { name: "Cordarone", dose: "30 days tablets", timing: "", stock: 30, originalStock: 30, lastTaken: null },
+                    { name: "Orofer XT", dose: "30 tablets", timing: "", stock: 30, originalStock: 30, lastTaken: null },
+                    { name: "Hyqvit", dose: "30 tablets", timing: "", stock: 30, originalStock: 30, lastTaken: null }
                 ],
                 afternoon: [
                     { name: "Acitrom", dose: "1mg/2mg alternate days", timing: "4pm", stock: 30, originalStock: 30, lastTaken: null }
@@ -470,7 +470,7 @@
             },
             mother: {
                 afterBreakfast: [
-                    { name: "Telzox H", dose: "30 days", timing: "", stock: 30, originalStock: 30, lastTaken: null },
+                    { name: "Telzox H", dose: "30 tablets", timing: "", stock: 30, originalStock: 30, lastTaken: null },
                     { name: "Cinod", dose: "10mg", timing: "After breakfast and dinner", stock: 60, originalStock: 60, lastTaken: null },
                     { name: "Zavamet", dose: "50/500", timing: "After breakfast and dinner", stock: 60, originalStock: 60, lastTaken: null }
                 ],
@@ -539,12 +539,12 @@
             if (savedData) {
                 // Use saved data
                 medicineData = savedData;
-                showNotification('Previous data loaded successfully!');
+                showNotification('📊 Previous data loaded successfully!');
             } else {
                 // Use original data for first time
                 medicineData = JSON.parse(JSON.stringify(originalMedicineData));
                 saveToStorage(medicineData);
-                showNotification('Welcome for medicine tracking.');
+                showNotification('🆕 Welcome! New medicine tracker initialized.');
             }
         }
 
@@ -598,10 +598,10 @@
             fatherSection.innerHTML = '';
 
             const timeSlots = [
-                { key: 'morning', title: 'Morning (Before Breakfast)', icon:'' },
-                { key: 'afterBreakfast', title: 'After Breakfast', icon:'' },
-                { key: 'afternoon', title: 'Afternoon (4 PM)', icon:'' },
-                { key: 'afterDinner', title: 'After Dinner', icon:''}
+                { key: 'morning', title: '🌅 Morning (Before Breakfast)', icon: '🌅' },
+                { key: 'afterBreakfast', title: '🥞 After Breakfast', icon: '🥞' },
+                { key: 'afternoon', title: '☀️ Afternoon (4 PM)', icon: '☀️' },
+                { key: 'afterDinner', title: '🌙 After Dinner', icon: '🌙' }
             ];
 
             timeSlots.forEach(slot => {
@@ -625,8 +625,8 @@
             motherSection.innerHTML = '';
 
             const timeSlots = [
-                { key: 'afterBreakfast', title: 'After Breakfast'},
-                { key: 'afterDinner', title: 'After Dinner' }
+                { key: 'afterBreakfast', title: '🥞 After Breakfast', icon: '🥞' },
+                { key: 'afterDinner', title: '🌙 After Dinner', icon: '🌙' }
             ];
 
             timeSlots.forEach(slot => {
@@ -662,7 +662,7 @@
             
             let stockStatus = '';
             if (takenToday) {
-                stockStatus = 'Taken Today';
+                stockStatus = '✅ Taken Today';
             } else if (isLowStock) {
                 stockStatus = `${medicine.stock} ⚠️`;
             } else {
@@ -690,10 +690,10 @@
                     <button class="btn btn-take" 
                             onclick="takeMedicine('${person}', '${slot}', ${index})"
                             ${medicine.stock <= 0 ? 'disabled' : ''}>
-                        ${medicine.stock <= 0 ? 'Out of Stock' : (takenToday ? 'Taken Today' : 'Take Medicine')}
+                        ${medicine.stock <= 0 ? '❌ Out of Stock' : (takenToday ? '✅ Taken Today' : '💊 Take Medicine')}
                     </button>
                     <button class="btn btn-calendar" onclick="addToCalendar('${medicine.name}', '${slot}')">
-                        Add to Calendar
+                        📅 Add to Calendar
                     </button>
                 </div>
             `;
@@ -732,7 +732,7 @@
                         renderMotherMedicines();
                     }
                 } else {
-                    showNotification('Error saving data. Please try again.', 'error');
+                    showNotification('❌ Error saving data. Please try again.', 'error');
                }
            } else {
                showNotification(`❌ ${medicine.name} is out of stock!`, 'error');
@@ -757,7 +757,7 @@
            const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Take ${medicineName}&dates=${startDate.replace(/[-:]/g, '')}/${endDate.replace(/[-:]/g, '')}&details=Reminder to take ${medicineName}&recur=RRULE:FREQ=DAILY`;
            
            window.open(calendarUrl, '_blank');
-           showNotification(`Calendar reminder created for ${medicineName}!`);
+           showNotification(`📅 Calendar reminder created for ${medicineName}!`);
        }
 
        function resetAllStock() {
@@ -767,9 +767,9 @@
                if (saveData()) {
                    renderFatherMedicines();
                    renderMotherMedicines();
-                   showNotification('All medicine stock has been reset to original levels!');
+                   showNotification('🔄 All medicine stock has been reset to original levels!');
                } else {
-                   showNotification('Error resetting stock. Please try again.', 'error');
+                   showNotification('❌ Error resetting stock. Please try again.', 'error');
                }
            }
        }
