@@ -639,10 +639,10 @@
             try {
                 // Basic structure validation
                 if (!data || typeof data !== 'object') return false;
-                if (!data.father || !data.mother) return false;
+                if (!data.naveen || !data.nisha) return false;
                 
                 // Validating data structure for both
-                for (const person of ['navven', 'nisha']) {
+                for (const person of ['naveen', 'nisha']) {
                     const personData = data[person];
                     if (!personData || typeof personData !== 'object') return false;
                     
@@ -675,8 +675,8 @@
                 
                 // Count total medicines tracked
                 let totalMedicines = 0;
-                Object.values(medicineData.father).flat().forEach(() => totalMedicines++);
-                Object.values(medicineData.mother).flat().forEach(() => totalMedicines++);
+                Object.values(medicineData.naveen).flat().forEach(() => totalMedicines++);
+                Object.values(medicineData.nisha).flat().forEach(() => totalMedicines++);
                 
                 console.log(`Loaded data for ${totalMedicines} medicines`);
             } else {
@@ -728,8 +728,8 @@
             
             initializeData();
             initializeReminders();
-            renderFatherMedicines();
-            renderMotherMedicines();
+            renderNaveenMedicines();
+            renderNishaMedicines();
     
             // Show install prompt on mobile
             if (isMobile() && !isAppInstalled()) {
@@ -764,9 +764,9 @@
             document.getElementById(tab).classList.add('active');
         }
 
-        function renderFatherMedicines() {
-            const fatherSection = document.getElementById('naveen');
-            fathefrSection.innerHTML = '';
+        function renderNaveenMedicines() {
+            const naveenSection = document.getElementById('naveen');
+            naveenSection.innerHTML = '';
 
             const timeSlots = [
                 { key: 'morning', title: 'Morning (Before Breakfast)', icon: '🌅' },
@@ -776,7 +776,7 @@
             ];
 
             timeSlots.forEach(slot => {
-                if (medicineData.father[slot.key] && medicineData.father[slot.key].length > 0) {
+                if (medicineData.naveen[slot.key] && medicineData.naveen[slot.key].length > 0) {
                 const timeSlotDiv = document.createElement('div');
                 timeSlotDiv.className = 'time-slot';
                 
@@ -784,7 +784,7 @@
                 header.innerHTML = `${slot.icon} ${slot.title}`;
                 timeSlotDiv.appendChild(header);
 
-                medicineData.father[slot.key].forEach((medicine, index) => {
+                medicineData.naveen[slot.key].forEach((medicine, index) => {
                     const medicineDiv = document.createElement('div');
                     medicineDiv.className = 'medicine-item';
                     
@@ -834,9 +834,9 @@
         });
     }
 
-    function renderMotherMedicines() {
-        const motherSection = document.getElementById('nisha');
-        motherSection.innerHTML = '';
+    function renderNishaMedicines() {
+        const nishaSection = document.getElementById('nisha');
+        nishaSection.innerHTML = '';
 
         const timeSlots = [
             { key: 'afterBreakfast', title: 'After Breakfast', icon: '🥞' },
@@ -844,7 +844,7 @@
         ];
 
         timeSlots.forEach(slot => {
-            if (medicineData.mother[slot.key] && medicineData.mother[slot.key].length > 0) {
+            if (medicineData.nisha[slot.key] && medicineData.nisha[slot.key].length > 0) {
                 const timeSlotDiv = document.createElement('div');
                 timeSlotDiv.className = 'time-slot';
                 
@@ -852,7 +852,7 @@
                 header.innerHTML = `${slot.icon} ${slot.title}`;
                 timeSlotDiv.appendChild(header);
 
-                medicineData.mother[slot.key].forEach((medicine, index) => {
+                medicineData.nisha[slot.key].forEach((medicine, index) => {
                     const medicineDiv = document.createElement('div');
                     medicineDiv.className = 'medicine-item';
                     
@@ -926,9 +926,9 @@
         
         // Re-render the appropriate section
         if (person === 'naveen') {
-            renderFatherMedicines();
+            renderNaveenMedicines();
         } else {
-            renderMotherMedicines();
+            renderNishaMedicines();
         }
         
         // Show success notification
@@ -1737,10 +1737,10 @@ function initializeReminders() {
                 "Nisha's medicines are well stocked.";
         } else {
             // General stock check
-            Object.values(medicineData.father).flat().forEach(medicine => {
+            Object.values(medicineData.naveen).flat().forEach(medicine => {
                 if (medicine.stock <= 5) lowStockMedicines.push(`Naveen's ${medicine.name}: ${medicine.stock} left`);
             });
-            Object.values(medicineData.mother).flat().forEach(medicine => {
+            Object.values(medicineData.nisha).flat().forEach(medicine => {
                 if (medicine.stock <= 10) lowStockMedicines.push(`Nisha's ${medicine.name}: ${medicine.stock} left`);
             });
             
