@@ -719,6 +719,18 @@
             const takenDate = new Date(lastTaken).toDateString();
             return today === takenDate;
         }
+        function logMedicineHistory(person, medName, status) {
+    const today = new Date().toISOString().split('T')[0];
+    const historyKey = 'medicine_history';
+    let history = JSON.parse(localStorage.getItem(historyKey) || '{}');
+
+    if (!history[person]) history[person] = {};
+    if (!history[person][medName]) history[person][medName] = {};
+
+    history[person][medName][today] = status;
+    localStorage.setItem(historyKey, JSON.stringify(history));
+}
+
 
         // Initialize the app
         function initApp() {
@@ -730,6 +742,23 @@
             initializeReminders();
             rendernaveenMedicines();
             rendernishaMedicines();
+            markMissedMedicines();
+            
+
+            function markMissedMedicines() {
+    const today = new Date().toISOString().split('T')[0];
+    for (const person of ['naveen', 'nisha']) {
+        for (const slot in medicineData[person]) {
+            medicineData[person][slot].forEach(med => {
+                const lastTaken = med.lastTaken ? new Date(med.lastTaken).toISOString().split('T')[0] : null;
+                if (lastTaken !== today) {
+                    logMedicineHistory(person, med.name, 'missed');
+                }
+            });
+        }
+    }
+}
+
     
             // Show install prompt on mobile
             if (isMobile() && !isAppInstalled()) {
@@ -823,6 +852,9 @@
                             <button class="btn btn-calendar" onclick="viewCalendar('naveen', '${medicine.name}')">
                                 📅 Add reminder to Calendar
                             </button>
+                            <button class="btn btn-take" onclick="viewHistory('naveen', '${medicine.name}')">
+                                📜 View History
+                            </button>
                         </div>
                     `;
                     
@@ -891,6 +923,9 @@
                             <button class="btn btn-calendar" onclick="viewCalendar('nisha', '${medicine.name}')">
                                 📅 Add reminder to Calendar
                             </button>
+                            <button class="btn btn-take" onclick="viewHistory('nisha', '${medicine.name}')">
+                                 📜 View History
+                            </button>
                         </div>
                     `;
                     
@@ -920,7 +955,8 @@
         // Update medicine data
         medicine.stock--;
         medicine.lastTaken = new Date().toISOString();
-        
+        logMedicineHistory(person, medicine.name, 'taken');
+
         // Save data
         autoSave();
         
@@ -1808,6 +1844,43 @@ function initializeReminders() {
 
     // Auto-save every 5 minutes as backup
     setInterval(autoSave, 5 * 60 * 1000);
+
+
+    function viewHistory(person, medName) {
+    const history = JSON.parse(localStorage.getItem('medicine_history') || '{}');
+    const medHistory = history[person]?.[medName] || {};
+
+    const sortedDates = Object.keys(medHistory).sort((a, b) => new Date(b) - new Date(a));
+    const rows = sortedDates.map(date => {
+        const status = medHistory[date] === 'taken' ? '✅ Taken' : '❌ Missed';
+        return `<tr><td>${date}</td><td>${status}</td></tr>`;
+    }).join('');
+
+    const modalHTML = `
+        <div id="historyModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;">
+            <div style="background:white;padding:30px;border-radius:20px;max-width:90%;max-height:90%;overflow:auto;position:relative;">
+                <button onclick="document.getElementById('historyModal').remove()" style="position:absolute;top:15px;right:20px;font-size:24px;background:none;border:none;cursor:pointer;">×</button>
+                <h2 style="color:#4F46E5;text-align:center;">📜 ${medName} History</h2>
+                <table style="width:100%;margin-top:20px;border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#f3f4f6;">
+                            <th style="padding:10px;border-bottom:1px solid #ccc;">Date</th>
+                            <th style="padding:10px;border-bottom:1px solid #ccc;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows || '<tr><td colspan="2" style="text-align:center;padding:20px;">No history found</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+
+
+
     </script>
 </body>
 </html>
