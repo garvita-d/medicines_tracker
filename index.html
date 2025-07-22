@@ -427,11 +427,11 @@
         </div>
 
         <div id="Naveen" class="person-section active">
-            <!-- Father's medicines populated by JavaScript -->
+            <!-- naveen's medicines populated by JavaScript -->
         </div>
 
         <div id="Nisha" class="person-section">
-            <!-- Mother's medicines populated by JavaScript -->
+            <!-- nisha's medicines populated by JavaScript -->
         </div>
 
         <div id="chat" class="person-section">
@@ -817,10 +817,10 @@
                         <div class="action-buttons">
                             <button class="btn btn-take ${takenToday ? 'disabled' : ''}" 
                                     ${takenToday ? 'disabled' : ''} 
-                                    onclick="takeMedicine('father', '${slot.key}', ${index})">
+                                    onclick="takeMedicine('naveen', '${slot.key}', ${index})">
                                 ${takenToday ? '✅ Taken Today' : '💊 Take Medicine'}
                             </button>
-                            <button class="btn btn-calendar" onclick="viewCalendar('father', '${medicine.name}')">
+                            <button class="btn btn-calendar" onclick="viewCalendar('naveen', '${medicine.name}')">
                                 📅 Add reminder to Calendar
                             </button>
                         </div>
@@ -829,7 +829,7 @@
                     timeSlotDiv.appendChild(medicineDiv);
                 });
 
-                fatherSection.appendChild(timeSlotDiv);
+                naveenSection.appendChild(timeSlotDiv);
             }
         });
     }
@@ -885,10 +885,10 @@
                         <div class="action-buttons">
                             <button class="btn btn-take ${takenToday ? 'disabled' : ''}" 
                                     ${takenToday ? 'disabled' : ''} 
-                                    onclick="takeMedicine('mother', '${slot.key}', ${index})">
+                                    onclick="takeMedicine('nisha', '${slot.key}', ${index})">
                                 ${takenToday ? '✅ Taken Today' : '💊 Take Medicine'}
                             </button>
-                            <button class="btn btn-calendar" onclick="viewCalendar('mother', '${medicine.name}')">
+                            <button class="btn btn-calendar" onclick="viewCalendar('nisha', '${medicine.name}')">
                                 📅 Add reminder to Calendar
                             </button>
                         </div>
@@ -897,7 +897,7 @@
                     timeSlotDiv.appendChild(medicineDiv);
                 });
 
-                motherSection.appendChild(timeSlotDiv);
+                nishaSection.appendChild(timeSlotDiv);
             }
         });
     }
@@ -1599,8 +1599,8 @@ function initializeReminders() {
             autoSave();
             
             // Re-render both sections
-            renderFatherMedicines();
-            renderMotherMedicines();
+            renderNaveenMedicines();
+            renderNishaMedicines();
             
             showNotification('🔄 All medicine stock has been reset to original levels!');
         }
@@ -1718,7 +1718,7 @@ function initializeReminders() {
         let lowStockMedicines = [];
         
         if (command.includes('naveen')) {
-            Object.values(medicineData.father).flat().forEach(medicine => {
+            Object.values(medicineData.naveen).flat().forEach(medicine => {
                 if (medicine.stock <= 5) {
                     lowStockMedicines.push(`${medicine.name}: ${medicine.stock} left`);
                 }
@@ -1727,7 +1727,7 @@ function initializeReminders() {
                 `Naveen's low stock medicines: ${lowStockMedicines.join(', ')}` :
                 "Naveen's medicines are well stocked.";
         } else if (command.includes('nisha')) {
-            Object.values(medicineData.mother).flat().forEach(medicine => {
+            Object.values(medicineData.nisha).flat().forEach(medicine => {
                 if (medicine.stock <= 10) {
                     lowStockMedicines.push(`${medicine.name}: ${medicine.stock} left`);
                 }
