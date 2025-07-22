@@ -421,17 +421,17 @@
         </div>
 
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('Naveen')">Naveen</button>
-            <button class="tab" onclick="switchTab('Nisha')">Nisha</button>
+            <button class="tab active" onclick="switchTab('father')">Father</button>
+            <button class="tab" onclick="switchTab('mother')">Mother</button>
             <button class="tab" onclick="switchTab('chat')">Voice Assistant</button>
         </div>
 
-        <div id="Naveen" class="person-section active">
-            <!-- naveen's medicines populated by JavaScript -->
+        <div id="father" class="person-section active">
+            <!-- Father's medicines populated by JavaScript -->
         </div>
 
-        <div id="Nisha" class="person-section">
-            <!-- nisha's medicines populated by JavaScript -->
+        <div id="mother" class="person-section">
+            <!-- Mother's medicines populated by JavaScript -->
         </div>
 
         <div id="chat" class="person-section">
@@ -448,7 +448,7 @@
                 <div style="background: linear-gradient(45deg, #f0f9ff, #e0f2fe); padding: 20px; border-radius: 15px; margin-top: 20px;">
                     <h4 style="color: #0369a1; margin-bottom: 10px;">Example Commands:</h4>
                     <p style="color: #6B7280; font-style: italic;">
-                        "Check Naveen's medicine stock"<br>
+                        "Check father's medicine stock"<br>
                         "What is Metolol used for?"<br>
                         "Remind me about evening medicines"<br>
                         "How many Acitrom tablets are left?"
@@ -509,7 +509,7 @@
         
         // Original medicine data structure
         const originalMedicineData = {
-            naveen: {
+            father: {
                 morning: [
                     { name: "Maxi PhD", dose: "1 tablet at each timeslot", stock: 30, originalStock: 30, lastTaken: null }
                 ],
@@ -528,7 +528,7 @@
                     { name: "Telmiford 40mg", dose: "1 tablet at each timeslot", stock: 30, originalStock: 30, lastTaken: null }
                 ]
             },
-            nisha: {
+            mother: {
                 afterBreakfast: [
                     { name: "Telzox H", dose: "1 tablet at each timeslot", stock: 30, originalStock: 30, lastTaken: null },
                     { name: "Cinod 10mg", dose: "1 tablet at each timeslot",  stock: 60, originalStock: 60, lastTaken: null },
@@ -639,10 +639,10 @@
             try {
                 // Basic structure validation
                 if (!data || typeof data !== 'object') return false;
-                if (!data.naveen || !data.nisha) return false;
+                if (!data.father || !data.mother) return false;
                 
                 // Validating data structure for both
-                for (const person of ['naveen', 'nisha']) {
+                for (const person of ['father', 'mother']) {
                     const personData = data[person];
                     if (!personData || typeof personData !== 'object') return false;
                     
@@ -675,8 +675,8 @@
                 
                 // Count total medicines tracked
                 let totalMedicines = 0;
-                Object.values(medicineData.naveen).flat().forEach(() => totalMedicines++);
-                Object.values(medicineData.nisha).flat().forEach(() => totalMedicines++);
+                Object.values(medicineData.father).flat().forEach(() => totalMedicines++);
+                Object.values(medicineData.mother).flat().forEach(() => totalMedicines++);
                 
                 console.log(`Loaded data for ${totalMedicines} medicines`);
             } else {
@@ -728,8 +728,8 @@
             
             initializeData();
             initializeReminders();
-            renderNaveenMedicines();
-            renderNishaMedicines();
+            renderFatherMedicines();
+            renderMotherMedicines();
     
             // Show install prompt on mobile
             if (isMobile() && !isAppInstalled()) {
@@ -764,9 +764,9 @@
             document.getElementById(tab).classList.add('active');
         }
 
-        function renderNaveenMedicines() {
-            const naveenSection = document.getElementById('naveen');
-            naveenSection.innerHTML = '';
+        function renderFatherMedicines() {
+            const fatherSection = document.getElementById('father');
+            fatherSection.innerHTML = '';
 
             const timeSlots = [
                 { key: 'morning', title: 'Morning (Before Breakfast)', icon: '🌅' },
@@ -776,7 +776,7 @@
             ];
 
             timeSlots.forEach(slot => {
-                if (medicineData.naveen[slot.key] && medicineData.naveen[slot.key].length > 0) {
+                if (medicineData.father[slot.key] && medicineData.father[slot.key].length > 0) {
                 const timeSlotDiv = document.createElement('div');
                 timeSlotDiv.className = 'time-slot';
                 
@@ -784,7 +784,7 @@
                 header.innerHTML = `${slot.icon} ${slot.title}`;
                 timeSlotDiv.appendChild(header);
 
-                medicineData.naveen[slot.key].forEach((medicine, index) => {
+                medicineData.father[slot.key].forEach((medicine, index) => {
                     const medicineDiv = document.createElement('div');
                     medicineDiv.className = 'medicine-item';
                     
@@ -817,10 +817,10 @@
                         <div class="action-buttons">
                             <button class="btn btn-take ${takenToday ? 'disabled' : ''}" 
                                     ${takenToday ? 'disabled' : ''} 
-                                    onclick="takeMedicine('naveen', '${slot.key}', ${index})">
+                                    onclick="takeMedicine('father', '${slot.key}', ${index})">
                                 ${takenToday ? '✅ Taken Today' : '💊 Take Medicine'}
                             </button>
-                            <button class="btn btn-calendar" onclick="viewCalendar('naveen', '${medicine.name}')">
+                            <button class="btn btn-calendar" onclick="viewCalendar('father', '${medicine.name}')">
                                 📅 Add reminder to Calendar
                             </button>
                         </div>
@@ -829,14 +829,14 @@
                     timeSlotDiv.appendChild(medicineDiv);
                 });
 
-                naveenSection.appendChild(timeSlotDiv);
+                fatherSection.appendChild(timeSlotDiv);
             }
         });
     }
 
-    function renderNishaMedicines() {
-        const nishaSection = document.getElementById('nisha');
-        nishaSection.innerHTML = '';
+    function renderMotherMedicines() {
+        const motherSection = document.getElementById('mother');
+        motherSection.innerHTML = '';
 
         const timeSlots = [
             { key: 'afterBreakfast', title: 'After Breakfast', icon: '🥞' },
@@ -844,7 +844,7 @@
         ];
 
         timeSlots.forEach(slot => {
-            if (medicineData.nisha[slot.key] && medicineData.nisha[slot.key].length > 0) {
+            if (medicineData.mother[slot.key] && medicineData.mother[slot.key].length > 0) {
                 const timeSlotDiv = document.createElement('div');
                 timeSlotDiv.className = 'time-slot';
                 
@@ -852,7 +852,7 @@
                 header.innerHTML = `${slot.icon} ${slot.title}`;
                 timeSlotDiv.appendChild(header);
 
-                medicineData.nisha[slot.key].forEach((medicine, index) => {
+                medicineData.mother[slot.key].forEach((medicine, index) => {
                     const medicineDiv = document.createElement('div');
                     medicineDiv.className = 'medicine-item';
                     
@@ -885,10 +885,10 @@
                         <div class="action-buttons">
                             <button class="btn btn-take ${takenToday ? 'disabled' : ''}" 
                                     ${takenToday ? 'disabled' : ''} 
-                                    onclick="takeMedicine('nisha', '${slot.key}', ${index})">
+                                    onclick="takeMedicine('mother', '${slot.key}', ${index})">
                                 ${takenToday ? '✅ Taken Today' : '💊 Take Medicine'}
                             </button>
-                            <button class="btn btn-calendar" onclick="viewCalendar('nisha', '${medicine.name}')">
+                            <button class="btn btn-calendar" onclick="viewCalendar('mother', '${medicine.name}')">
                                 📅 Add reminder to Calendar
                             </button>
                         </div>
@@ -897,7 +897,7 @@
                     timeSlotDiv.appendChild(medicineDiv);
                 });
 
-                nishaSection.appendChild(timeSlotDiv);
+                motherSection.appendChild(timeSlotDiv);
             }
         });
     }
@@ -925,17 +925,17 @@
         autoSave();
         
         // Re-render the appropriate section
-        if (person === 'naveen') {
-            renderNaveenMedicines();
+        if (person === 'father') {
+            renderFatherMedicines();
         } else {
-            renderNishaMedicines();
+            renderMotherMedicines();
         }
         
         // Show success notification
         showNotification(`✅ ${medicine.name} taken successfully! ${medicine.stock} tablets remaining.`);
         
         // Check for low stock warning
-        const threshold = person === 'nisha' ? 10 : 5;
+        const threshold = person === 'mother' ? 10 : 5;
         if (medicine.stock <= threshold) {
             setTimeout(() => {
                 showNotification(`⚠️ Low stock alert: Only ${medicine.stock} ${medicine.name} tablets left!`, 'error');
@@ -1599,8 +1599,8 @@ function initializeReminders() {
             autoSave();
             
             // Re-render both sections
-            renderNaveenMedicines();
-            renderNishaMedicines();
+            renderFatherMedicines();
+            renderMotherMedicines();
             
             showNotification('🔄 All medicine stock has been reset to original levels!');
         }
@@ -1717,31 +1717,31 @@ function initializeReminders() {
         let response = "";
         let lowStockMedicines = [];
         
-        if (command.includes('naveen')) {
-            Object.values(medicineData.naveen).flat().forEach(medicine => {
+        if (command.includes('father')) {
+            Object.values(medicineData.father).flat().forEach(medicine => {
                 if (medicine.stock <= 5) {
                     lowStockMedicines.push(`${medicine.name}: ${medicine.stock} left`);
                 }
             });
             response = lowStockMedicines.length > 0 ? 
-                `Naveen's low stock medicines: ${lowStockMedicines.join(', ')}` :
-                "Naveen's medicines are well stocked.";
-        } else if (command.includes('nisha')) {
-            Object.values(medicineData.nisha).flat().forEach(medicine => {
+                `Father's low stock medicines: ${lowStockMedicines.join(', ')}` :
+                "Father's medicines are well stocked.";
+        } else if (command.includes('mother')) {
+            Object.values(medicineData.mother).flat().forEach(medicine => {
                 if (medicine.stock <= 10) {
                     lowStockMedicines.push(`${medicine.name}: ${medicine.stock} left`);
                 }
             });
             response = lowStockMedicines.length > 0 ? 
-                `Nisha's low stock medicines: ${lowStockMedicines.join(', ')}` :
-                "Nisha's medicines are well stocked.";
+                `Mother's low stock medicines: ${lowStockMedicines.join(', ')}` :
+                "Mother's medicines are well stocked.";
         } else {
             // General stock check
-            Object.values(medicineData.naveen).flat().forEach(medicine => {
-                if (medicine.stock <= 5) lowStockMedicines.push(`Naveen's ${medicine.name}: ${medicine.stock} left`);
+            Object.values(medicineData.father).flat().forEach(medicine => {
+                if (medicine.stock <= 5) lowStockMedicines.push(`Father's ${medicine.name}: ${medicine.stock} left`);
             });
-            Object.values(medicineData.nisha).flat().forEach(medicine => {
-                if (medicine.stock <= 10) lowStockMedicines.push(`Nisha's ${medicine.name}: ${medicine.stock} left`);
+            Object.values(medicineData.mother).flat().forEach(medicine => {
+                if (medicine.stock <= 10) lowStockMedicines.push(`Mother's ${medicine.name}: ${medicine.stock} left`);
             });
             
             response = lowStockMedicines.length > 0 ? 
@@ -1754,7 +1754,6 @@ function initializeReminders() {
 
     function getMedicineInfo(command) {
         const medicineInfo = {
-            'maxi phd': 'Maxi PhD is used to treat acidity related conditions',
             'metolol': 'Metolol MF is a beta-blocker used to treat high blood pressure and heart conditions.',
             'pilclop': 'Pilclop contains clopidogrel, used to prevent blood clots.',
             'cordarone': 'Cordarone contains amiodarone, used to treat irregular heartbeats.',
