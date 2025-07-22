@@ -409,7 +409,7 @@
         </div>
 
         <div class="header">
-            <h1>Medicine Reminder System</h1>
+            <h1>Medicines Tracking System</h1>
             <p>Never miss your medication again!</p>
             <div class="data-info" id="dataInfo">
                 Data persists across sessions • Last updated: <span id="lastUpdate">Never</span>
@@ -421,16 +421,16 @@
         </div>
 
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('father')">Father</button>
-            <button class="tab" onclick="switchTab('mother')">Mother</button>
+            <button class="tab active" onclick="switchTab('Naveen')">Naveen</button>
+            <button class="tab" onclick="switchTab('Nisha')">Nisha</button>
             <button class="tab" onclick="switchTab('chat')">Voice Assistant</button>
         </div>
 
-        <div id="father" class="person-section active">
+        <div id="Naveen" class="person-section active">
             <!-- Father's medicines populated by JavaScript -->
         </div>
 
-        <div id="mother" class="person-section">
+        <div id="Nisha" class="person-section">
             <!-- Mother's medicines populated by JavaScript -->
         </div>
 
@@ -448,7 +448,7 @@
                 <div style="background: linear-gradient(45deg, #f0f9ff, #e0f2fe); padding: 20px; border-radius: 15px; margin-top: 20px;">
                     <h4 style="color: #0369a1; margin-bottom: 10px;">Example Commands:</h4>
                     <p style="color: #6B7280; font-style: italic;">
-                        "Check father's medicine stock"<br>
+                        "Check Naveen's medicine stock"<br>
                         "What is Metolol used for?"<br>
                         "Remind me about evening medicines"<br>
                         "How many Acitrom tablets are left?"
@@ -509,7 +509,7 @@
         
         // Original medicine data structure
         const originalMedicineData = {
-            father: {
+            naveen: {
                 morning: [
                     { name: "Maxi PhD", dose: "1 tablet at each timeslot", stock: 30, originalStock: 30, lastTaken: null }
                 ],
@@ -528,7 +528,7 @@
                     { name: "Telmiford 40mg", dose: "1 tablet at each timeslot", stock: 30, originalStock: 30, lastTaken: null }
                 ]
             },
-            mother: {
+            nisha: {
                 afterBreakfast: [
                     { name: "Telzox H", dose: "1 tablet at each timeslot", stock: 30, originalStock: 30, lastTaken: null },
                     { name: "Cinod 10mg", dose: "1 tablet at each timeslot",  stock: 60, originalStock: 60, lastTaken: null },
@@ -642,7 +642,7 @@
                 if (!data.father || !data.mother) return false;
                 
                 // Validating data structure for both
-                for (const person of ['father', 'mother']) {
+                for (const person of ['navven', 'nisha']) {
                     const personData = data[person];
                     if (!personData || typeof personData !== 'object') return false;
                     
@@ -765,8 +765,8 @@
         }
 
         function renderFatherMedicines() {
-            const fatherSection = document.getElementById('father');
-            fatherSection.innerHTML = '';
+            const fatherSection = document.getElementById('naveen');
+            fathefrSection.innerHTML = '';
 
             const timeSlots = [
                 { key: 'morning', title: 'Morning (Before Breakfast)', icon: '🌅' },
@@ -835,7 +835,7 @@
     }
 
     function renderMotherMedicines() {
-        const motherSection = document.getElementById('mother');
+        const motherSection = document.getElementById('nisha');
         motherSection.innerHTML = '';
 
         const timeSlots = [
@@ -925,7 +925,7 @@
         autoSave();
         
         // Re-render the appropriate section
-        if (person === 'father') {
+        if (person === 'naveen') {
             renderFatherMedicines();
         } else {
             renderMotherMedicines();
@@ -935,7 +935,7 @@
         showNotification(`✅ ${medicine.name} taken successfully! ${medicine.stock} tablets remaining.`);
         
         // Check for low stock warning
-        const threshold = person === 'mother' ? 10 : 5;
+        const threshold = person === 'nisha' ? 10 : 5;
         if (medicine.stock <= threshold) {
             setTimeout(() => {
                 showNotification(`⚠️ Low stock alert: Only ${medicine.stock} ${medicine.name} tablets left!`, 'error');
@@ -1717,31 +1717,31 @@ function initializeReminders() {
         let response = "";
         let lowStockMedicines = [];
         
-        if (command.includes('father')) {
+        if (command.includes('naveen')) {
             Object.values(medicineData.father).flat().forEach(medicine => {
                 if (medicine.stock <= 5) {
                     lowStockMedicines.push(`${medicine.name}: ${medicine.stock} left`);
                 }
             });
             response = lowStockMedicines.length > 0 ? 
-                `Father's low stock medicines: ${lowStockMedicines.join(', ')}` :
-                "Father's medicines are well stocked.";
-        } else if (command.includes('mother')) {
+                `Naveen's low stock medicines: ${lowStockMedicines.join(', ')}` :
+                "Naveen's medicines are well stocked.";
+        } else if (command.includes('nisha')) {
             Object.values(medicineData.mother).flat().forEach(medicine => {
                 if (medicine.stock <= 10) {
                     lowStockMedicines.push(`${medicine.name}: ${medicine.stock} left`);
                 }
             });
             response = lowStockMedicines.length > 0 ? 
-                `Mother's low stock medicines: ${lowStockMedicines.join(', ')}` :
-                "Mother's medicines are well stocked.";
+                `Nisha's low stock medicines: ${lowStockMedicines.join(', ')}` :
+                "Nisha's medicines are well stocked.";
         } else {
             // General stock check
             Object.values(medicineData.father).flat().forEach(medicine => {
-                if (medicine.stock <= 5) lowStockMedicines.push(`Father's ${medicine.name}: ${medicine.stock} left`);
+                if (medicine.stock <= 5) lowStockMedicines.push(`Naveen's ${medicine.name}: ${medicine.stock} left`);
             });
             Object.values(medicineData.mother).flat().forEach(medicine => {
-                if (medicine.stock <= 10) lowStockMedicines.push(`Mother's ${medicine.name}: ${medicine.stock} left`);
+                if (medicine.stock <= 10) lowStockMedicines.push(`Nisha's ${medicine.name}: ${medicine.stock} left`);
             });
             
             response = lowStockMedicines.length > 0 ? 
@@ -1754,6 +1754,7 @@ function initializeReminders() {
 
     function getMedicineInfo(command) {
         const medicineInfo = {
+            'maxi phd': 'Maxi PhD is used to treat acidity related conditions',
             'metolol': 'Metolol MF is a beta-blocker used to treat high blood pressure and heart conditions.',
             'pilclop': 'Pilclop contains clopidogrel, used to prevent blood clots.',
             'cordarone': 'Cordarone contains amiodarone, used to treat irregular heartbeats.',
